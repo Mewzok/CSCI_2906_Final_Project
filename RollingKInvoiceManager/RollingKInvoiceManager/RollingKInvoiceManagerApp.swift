@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Firebase
+import FirebaseCore
 
 @main
 struct RollingKInvoiceManagerApp: App {
@@ -16,7 +17,7 @@ struct RollingKInvoiceManagerApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
         }
     }
 }

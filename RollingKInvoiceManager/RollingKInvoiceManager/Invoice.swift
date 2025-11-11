@@ -11,15 +11,45 @@ import FirebaseFirestore
 struct Invoice: Identifiable, Codable {
     @DocumentID var id: String?
     var rkNumber: String
-    var gross: Double
-    var pickupDate: Date
-    var deliveryDate: Date
-    var net: Double
-    var factorFee: Double
-    var dispatchFee: Double
+    var otherNumber: String? = nil
     var broker: Company
     var shipper: Company
     var receiver: Company
+    var gross: Double
+    var pickupDate: Date
+    var deliveryDate: Date
+    var factorFee: Double
+    var factorDate: Date?
+    var factorDue: Date?
+    var dispatchFee: Double? = nil
+    var dispatchCost: Double? = nil
+    var lumperCost: Double? = nil
+    var employeeCost: Double? = nil
+    var net: Double
+    
+    // convenience sample
+    static func sample(id: String = UUID().uuidString) -> Invoice {
+        let company = Company(companyName: "Logistics Company", address: "123 Main", phone: "555-5555", email: "info@email.com", reeferTemperature: "34F", extraInfo: "Notes")
+        return Invoice(
+            id: id,
+            rkNumber: "RK021-M",
+            otherNumber: "RK021-D",
+            broker: company,
+            shipper: company,
+            receiver: company,
+            gross: 1000,
+            pickupDate: ISO8601DateFormatter().date(from: "2003-01-02T00:00:00Z") ?? Date(),
+            deliveryDate: ISO8601DateFormatter().date(from: "2003-01-30T00:00:00Z") ?? Date(),
+            factorFee: 2.5,
+            factorDate: nil,
+            factorDue: nil,
+            dispatchFee: 5.0,
+            dispatchCost: nil,
+            lumperCost: 50,
+            employeeCost: nil,
+            net: 900
+        )
+    }
 }
 
 struct Company: Codable {
