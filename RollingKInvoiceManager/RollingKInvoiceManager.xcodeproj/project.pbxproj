@@ -10,6 +10,7 @@
 		3F427F5F2EC3CF4200B773CD /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 3F427F5E2EC3CF4100B773CD /* FirebaseAuth */; };
 		3F427F612EC3CF4200B773CD /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 3F427F602EC3CF4200B773CD /* FirebaseFirestore */; };
 		3F427F632EC3CF4200B773CD /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 3F427F622EC3CF4200B773CD /* FirebaseStorage */; };
+		3F427F6A2EC3D37700B773CD /* InvoiceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F427F692EC3D37700B773CD /* InvoiceService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,6 +34,7 @@
 		3F427F2E2EC3BEC400B773CD /* RollingKInvoiceManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RollingKInvoiceManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3F427F3E2EC3BEC700B773CD /* RollingKInvoiceManagerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RollingKInvoiceManagerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3F427F482EC3BEC700B773CD /* RollingKInvoiceManagerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RollingKInvoiceManagerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		3F427F692EC3D37700B773CD /* InvoiceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -84,6 +86,7 @@
 		3F427F252EC3BEC400B773CD = {
 			isa = PBXGroup;
 			children = (
+				3F427F692EC3D37700B773CD /* InvoiceService.swift */,
 				3F427F302EC3BEC400B773CD /* RollingKInvoiceManager */,
 				3F427F412EC3BEC700B773CD /* RollingKInvoiceManagerTests */,
 				3F427F4B2EC3BEC700B773CD /* RollingKInvoiceManagerUITests */,
@@ -251,6 +254,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3F427F6A2EC3D37700B773CD /* InvoiceService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
