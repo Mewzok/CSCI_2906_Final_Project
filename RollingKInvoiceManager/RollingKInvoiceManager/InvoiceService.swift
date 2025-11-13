@@ -12,7 +12,7 @@ class InvoiceService {
     static let shared = InvoiceService()
     private let db = Firestore.firestore()
     private init() {}
-    
+
     func fetchInvoices(limit: Int? = nil, completion: @escaping (Result<[Invoice], Error>) -> Void) {
         var query = db.collection("invoices").order(by: "rkNumber", descending: true)
         if let limit = limit {
@@ -24,46 +24,53 @@ class InvoiceService {
                 completion(.failure(error))
                 return
             }
-            guard let docs = snapshot?.documents
-            else {
+            
+            guard let docs = snapshot?.documents else {
                 completion(.success([]))
                 return
             }
             
             var invoices: [Invoice] = []
             for doc in docs {
-                let data = doc.data()
-                if let inv = Invoice(from: data, id: doc.documentID) {
-                    invoices.append(inv)
-                } else {
-                    print("InvoiceService: failed to parse document \(doc.documentID)")
+                do {
+                    let invoice = try doc.data(as: Invoice.self)
+                    invoices.append(invoice)
+                } catch {
+                    print("InvoiceService: failed to decode document \(doc.documentID): \(error)")
                 }
             }
+            
             completion(.success(invoices))
         }
     }
     
     func addInvoice(_ invoice: Invoice, completion: @escaping (Error?) -> Void) {
-        let data = invoice.toDictionary()
-        db.collection("invoices").addDocument(data: data) { err in
-            completion(err)
+        do {
+            _ = try db.collection("invoices").addDocument(from: invoice, completion: { error in
+                completion(error)
+            })
+        } catch {
+            completion(error)
         }
     }
     
     func updateInvoice(_ invoice: Invoice, completion: @escaping (Error?) -> Void) {
         guard let id = invoice.id else {
-            completion(NSError(domain: "InvoiceService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invoice missing id"]));
+            completion(NSError(domain: "InvoiceService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invoice missing id"]))
             return
         }
-        let data = invoice.toDictionary()
-        db.collection("invoices").document(id).setData(data, merge: true) { err in
-                completion(err)
+        do {
+            try db.collection("invoices").document(id).setData(from: invoice, merge: true, completion: { error in
+                completion(error)
+            })
+        } catch {
+            completion(error)
         }
     }
-    
+
     func deleteInvoice(id: String, completion: @escaping (Error?) -> Void) {
-        db.collection("invoices").document(id).delete { err in
-                completion(err)
+        db.collection("invoices").document(id).delete { error in
+            completion(error)
         }
     }
 }

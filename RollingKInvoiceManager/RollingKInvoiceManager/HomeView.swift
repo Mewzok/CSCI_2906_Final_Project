@@ -8,36 +8,73 @@
 import SwiftUI
 
 struct HomeView: View {
-    @StateObject private var viewModel = HomeViewModel()
+    @State private var invoices: [Invoice] = []
+    @State private var isLoading = true
     
-    private let columns = ["RK Number", "Gross", "Pickup Date", "Delivery Date", "Net"]
+    let columns = [
+        GridItem(.flexible(), alignment: .leading),  // RK#
+        GridItem(.flexible(), alignment: .leading),  // PO#
+        GridItem(.flexible(), alignment: .leading),  // Pickup
+        GridItem(.flexible(), alignment: .leading)   // Delivery
+    ]
     
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(alignment: .leading) {
             // header row
-            InvoiceHeaderView(columns: columns, invoices: viewModel.invoices)
-            
-            // list of invoices
-            ScrollView {
-                LazyVStack(spacing: 1) {
-                    ForEach(viewModel.invoices) { invoice in
-                        InvoiceRowView(invoice: invoice)
-                            .background(Color(.systemBackground))
-                            .onTapGesture {
-                                // open invoice detail view
-                            }
-                    }
-                }
+            LazyVGrid(columns: columns, spacing: 16) {
+                Text("RK#").bold()
+                Text("PO#").bold()
+                Text("Pickup").bold()
+                Text("Delivery").bold()
             }
+            .padding(.horizontal)
             
             Divider()
             
-            // bottom buttons and totals
-            BottomBarView(viewModel: viewModel)
-                .padding()
+            // invoice rows
+            if isLoading {
+                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if invoices.isEmpty {
+                Text("No invoices found").padding()
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(invoices) { invoice in
+                            Text(invoice.rkNumber)
+                            Text(invoice.broker.poNumber ?? "-")
+                            Text(dateString(invoice.pickupDate))
+                            Text(dateString(invoice.deliveryDate))
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            }
         }
         .onAppear {
-            viewModel.loadInvoices()
+            loadInvoices()
+        }
+    }
+    
+    // date format helper
+    private func dateString(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        return formatter.string(from: date)
+    }
+    
+    private func loadInvoices() {
+        isLoading = true
+        InvoiceService.shared.fetchInvoices { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let fetched):
+                    self.invoices = fetched
+                case .failure(let error):
+                    print("Error fetching invoices: \(error)")
+                    self.invoices = []
+                }
+                self.isLoading = false
+            }
         }
     }
 }
