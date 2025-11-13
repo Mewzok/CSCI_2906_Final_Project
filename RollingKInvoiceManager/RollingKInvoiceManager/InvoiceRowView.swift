@@ -11,19 +11,24 @@ struct InvoiceRowView: View {
     let invoice: Invoice
     
     var body: some View {
-        HStack(spacing: 0) {
+        LazyVGrid(columns: [
+            GridItem(.flexible(), alignment: .leading),
+            GridItem(.flexible(), alignment: .leading),
+            GridItem(.flexible(), alignment: .leading),
+            GridItem(.flexible(), alignment: .leading)
+        ]) {
             Text(invoice.rkNumber)
-            Text(String(format: "$%.2f", invoice.gross))
-            Text(invoice.pickupDate.formatted(date: .numeric, time: .omitted))
-            Text(invoice.deliveryDate.formatted(date: .numeric, time: .omitted))
-            Text(String(format: "$%.2f", invoice.net))
+            Text(invoice.broker.poNumber ?? "-")
+            Text(dateString(invoice.pickupDate))
+            Text(dateString(invoice.deliveryDate))
         }
-        .frame(maxWidth: .infinity)
-        .font(.subheadline)
-        .multilineTextAlignment(.center)
-        .padding(.vertical, 6)
-        .background(Color.white)
-        .border(Color.gray.opacity(0.5))
+        .padding(.vertical, 4)
+    }
+    
+    private func dateString(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.dateStyle = .short
+        return f.string(from: date)
     }
 }
 
