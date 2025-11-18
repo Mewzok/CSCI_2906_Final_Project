@@ -3,7 +3,7 @@
 //  RollingKInvoiceManager
 //
 //  Created by Student on 11/11/25.
-//
+//  Main home screen
 
 import SwiftUI
 
@@ -55,14 +55,21 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showingInvoiceForm) {
-                InvoiceFormView(invoice: invoiceToEdit ?? Invoice.sample()) { newInvoice in
-                    if let _ = invoiceToEdit {
-                        InvoiceService.shared.updateInvoice(newInvoice) { _ in fetchInvoices() }
+                InvoiceFormView(invoice: invoiceToEdit ?? Invoice.sample(), onSave: { newInvoice in
+                    if invoiceToEdit == nil {
+                        InvoiceService.shared.addInvoice(newInvoice) { _ in
+                            fetchInvoices()
+                        }
                     } else {
-                        InvoiceService.shared.addInvoice(newInvoice) { _ in fetchInvoices() }
+                        InvoiceService.shared.updateInvoice(newInvoice) { _ in
+                            fetchInvoices()
+                        }
                     }
-                    showingInvoiceForm = false
-                }
+                }, onDelete: { id in
+                    InvoiceService.shared.deleteInvoice(id: id) { _ in
+                        fetchInvoices()
+                    }
+                })
             }
             .onAppear {
                 fetchInvoices()

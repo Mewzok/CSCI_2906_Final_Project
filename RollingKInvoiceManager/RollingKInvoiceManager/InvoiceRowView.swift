@@ -14,7 +14,7 @@ struct InvoiceRowView: View {
         HStack {
             Text(invoice.rkNumber)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Text(invoice.broker.poNumber ?? "-")
+            Text(invoice.broker.poNumber.map(String.init) ?? "-")
                 .frame(maxWidth: .infinity, alignment: .leading)
             Text(dateString(invoice.pickupDate))
                 .frame(maxWidth: .infinity, alignment: .leading)

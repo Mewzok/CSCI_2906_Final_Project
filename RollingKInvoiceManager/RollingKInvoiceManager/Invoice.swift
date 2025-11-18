@@ -29,7 +29,7 @@ struct Invoice: Identifiable, Codable, Equatable {
     
     // preview sample
     static func sample(id: String = UUID().uuidString) -> Invoice {
-        let broker = Broker(companyName: "Broker Company", email: "broker@email.com", poNumber: "PO1234")
+        let broker = Broker(companyName: "Broker Company", email: "broker@email.com", poNumber: 1234)
         let shipper = Shipper(companyName: "Shipper Company", pickupDateTime: Date())
         let receiver = Receiver(companyName: "Receiver Company", deliveryAddress: "789 Address")
         return Invoice(
