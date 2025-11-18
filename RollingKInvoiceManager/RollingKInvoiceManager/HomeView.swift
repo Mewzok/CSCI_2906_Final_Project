@@ -27,6 +27,7 @@ struct HomeView: View {
                 } else if invoices.isEmpty {
                     Text("No invoices found")
                         .padding()
+                    Spacer()
                 } else {
                     ScrollView {
                         VStack(spacing: 0) {
