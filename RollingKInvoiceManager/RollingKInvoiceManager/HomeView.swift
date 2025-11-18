@@ -29,18 +29,16 @@ struct HomeView: View {
                         .padding()
                 } else {
                     ScrollView {
-                        LazyVGrid(columns: [
-                            GridItem(.flexible(), alignment: .leading),
-                            GridItem(.flexible(), alignment: .leading),
-                            GridItem(.flexible(), alignment: .leading),
-                            GridItem(.flexible(), alignment: .leading)
-                        ], spacing: 12) {
+                        VStack(spacing: 0) {
                             ForEach(invoices) { invoice in
                                 InvoiceRowView(invoice: invoice)
+                                    .contentShape(Rectangle())
                                     .onTapGesture {
                                         invoiceToEdit = invoice
                                         showingInvoiceForm = true
                                     }
+                                
+                                Divider()
                             }
                         }
                         .padding(.horizontal)

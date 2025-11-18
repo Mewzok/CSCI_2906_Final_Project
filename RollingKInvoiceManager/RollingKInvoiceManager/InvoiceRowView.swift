@@ -11,18 +11,17 @@ struct InvoiceRowView: View {
     let invoice: Invoice
     
     var body: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible(), alignment: .leading),
-            GridItem(.flexible(), alignment: .leading),
-            GridItem(.flexible(), alignment: .leading),
-            GridItem(.flexible(), alignment: .leading)
-        ]) {
+        HStack {
             Text(invoice.rkNumber)
+                .frame(maxWidth: .infinity, alignment: .leading)
             Text(invoice.broker.poNumber ?? "-")
+                .frame(maxWidth: .infinity, alignment: .leading)
             Text(dateString(invoice.pickupDate))
+                .frame(maxWidth: .infinity, alignment: .leading)
             Text(dateString(invoice.deliveryDate))
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
     
     private func dateString(_ date: Date) -> String {
