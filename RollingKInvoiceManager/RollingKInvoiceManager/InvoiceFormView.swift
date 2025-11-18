@@ -137,9 +137,17 @@ struct InvoiceFormView: View {
                                 // numeric temperature (fahrenheit)
                                 HStack {
                                     NumericTextField(value: Binding(
-                                        get: { invoice.broker.reeferTemperature ?? 0.0 },
-                                        set: { invoice.broker.reeferTemperature = $0 }
-                                    ), placeholder: "Reefer °F")
+                                        get: { invoice.broker.minReeferTemperature ?? 0.0 },
+                                        set: { invoice.broker.minReeferTemperature = $0 }
+                                    ), placeholder: "Min Reefer °F")
+                                    Text("°F")
+                                        .foregroundColor(.secondary)
+                                }
+                                HStack {
+                                    NumericTextField(value: Binding(
+                                        get: { invoice.broker.maxReeferTemperature ?? 0.0 },
+                                        set: { invoice.broker.maxReeferTemperature = $0 }
+                                    ), placeholder: "Max Reefer °F")
                                     Text("°F")
                                         .foregroundColor(.secondary)
                                 }

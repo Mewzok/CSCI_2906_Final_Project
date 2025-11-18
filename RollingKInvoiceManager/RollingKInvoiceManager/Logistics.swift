@@ -11,7 +11,8 @@ struct Broker: Codable, Equatable {
     var companyName: String
     var address: String?
     var phoneNumber: String?
-    var reeferTemperature: Double?
+    var minReeferTemperature: Double?
+    var maxReeferTemperature: Double?
     var email: String?
     var brokerName: String?
     var poNumber: Int?
@@ -22,7 +23,8 @@ struct Shipper: Codable, Equatable {
     var companyName: String
     var address: String?
     var phoneNumber: String?
-    var reeferTemperature: Double?
+    var minReeferTemperature: Double?
+    var maxReeferTemperature: Double?
     var deliveryAddress: String?
     var pickupDateTime: Date?
     var approximateWeight: Double?
@@ -34,7 +36,8 @@ struct Receiver: Codable, Equatable {
     var companyName: String
     var address: String?
     var phoneNumber: String?
-    var reeferTemperature: Double?
+    var minReeferTemperature: Double?
+    var maxReeferTemperature: Double?
     var deliveryAddress: String?
     var pickupDateTime: Date?
     var approximateWeight: Double?
