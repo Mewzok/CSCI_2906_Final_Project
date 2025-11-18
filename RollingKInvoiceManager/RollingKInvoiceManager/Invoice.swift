@@ -16,9 +16,9 @@ struct Invoice: Identifiable, Codable, Equatable {
     var shipper: Shipper
     var receiver: Receiver
     var gross: Double
-    var pickupDate: Date
-    var deliveryDate: Date
-    var factorFee: Double
+    var pickupDate: Date?
+    var deliveryDate: Date?
+    var factorFee: Double?
     var factorDate: Date? = nil
     var factorDue: Date? = nil
     var dispatchFee: Double? = nil

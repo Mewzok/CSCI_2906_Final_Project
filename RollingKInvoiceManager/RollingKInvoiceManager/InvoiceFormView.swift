@@ -42,8 +42,230 @@ struct InvoiceFormView: View {
         self._showDates = State(initialValue: isNew)
         
         // toggles. non-zero is automatically enabled
-        self._factorEnabled = State(initialValue: invoice.factorFee > 0)
+        self._factorEnabled = State(initialValue: (invoice.factorFee ?? 0) > 0)
         self._dispatchEnabled = State(initialValue: (invoice.dispatchFee ?? 0) > 0)
+    }
+    
+    // invoice section
+    private var invoiceSection: some View {
+        DisclosureGroup(isExpanded: $showInvoiceInfo) {
+            VStack(alignment: .leading, spacing: 12) {
+                TextField("RK#", text: $invoice.rkNumber)
+                // optional string for otherNumber
+                TextField("Other #", text: optionalStringBinding(\.otherNumber))
+            }
+            .padding(.top, 8)
+        } label: {
+            sectionLabel("Invoice")
+        }
+        .padding(.horizontal)
+    }
+    
+    // broker section
+    private var brokerSection: some View {
+        DisclosureGroup(isExpanded: $showBroker) {
+            VStack(alignment: .leading, spacing: 12) {
+                TextField("Company", text: $invoice.broker.companyName)
+                TextField("Address", text: optionalStringBinding(\.broker.address))
+                HStack {
+                    Text("PO")
+                        .foregroundColor(.secondary)
+                    NumericTextFieldInt(value: optionalIntBinding(\.broker.poNumber), placeholder: "PO#")
+                }
+                TextField("Phone", text: optionalStringBinding(\.broker.phoneNumber))
+                TextField("Email", text: optionalStringBinding(\.broker.email))
+                HStack {
+                    NumericTextField(value: optionalDoubleBinding(\.broker.minReeferTemperature), placeholder: "Reefer min")
+                    Text("°F").foregroundColor(.secondary)
+                }
+                HStack {
+                    NumericTextField(value: optionalDoubleBinding(\.broker.maxReeferTemperature), placeholder: "Reefer max")
+                    Text("°F").foregroundColor(.secondary)
+                }
+                TextField("Extra Info", text: optionalStringBinding(\.broker.extraInfo))
+            }
+            .padding(.top, 8)
+        } label: {
+            sectionLabel("Broker")
+        }
+        .padding(.horizontal)
+    }
+    
+    // shipper section
+    private var shipperSection: some View {
+        // shipper
+        DisclosureGroup(isExpanded: $showShipper) {
+            VStack(alignment: .leading, spacing: 12) {
+                TextField("Company", text: $invoice.shipper.companyName)
+                TextField("Address", text: optionalStringBinding(\.shipper.address))
+                TextField("Delivery Address", text: optionalStringBinding(\.shipper.deliveryAddress))
+                HStack {
+                    DatePicker("Pickup Date/Time", selection: Binding(
+                        get: { invoice.shipper.pickupDateTime ?? Date() },
+                        set: { invoice.shipper.pickupDateTime = $0 }
+                    ), displayedComponents: [.date, .hourAndMinute])
+                    .datePickerStyle(.compact)
+                }
+                HStack {
+                    NumericTextField(value: optionalDoubleBinding(\.shipper.approximateWeight), placeholder: "Weight")
+                    Text("lbs").foregroundColor(.secondary)
+                }
+                NumericTextFieldInt(value: optionalIntBinding(\.shipper.confirmationNumber), placeholder: "Confirmation #")
+                TextField("Extra info", text: optionalStringBinding(\.shipper.extraInfo))
+            }
+            .padding(.top, 8)
+        } label: {
+            sectionLabel("Shipper")
+        }
+        .padding(.horizontal)
+    }
+    
+    // receiver section
+    private var receiverSection: some View {
+        // receiver
+        DisclosureGroup(isExpanded: $showReceiver) {
+            VStack(alignment: .leading, spacing: 12) {
+                TextField("Company", text: $invoice.receiver.companyName)
+                TextField("Address", text: optionalStringBinding(\.receiver.address))
+                TextField("Delivery Address", text: optionalStringBinding(\.receiver.deliveryAddress))
+                HStack {
+                    DatePicker("Pickup Date/Time", selection: Binding(
+                        get: { invoice.receiver.pickupDateTime ?? Date() },
+                        set: { invoice.receiver.pickupDateTime = $0 }
+                    ), displayedComponents: [.date, .hourAndMinute])
+                    .datePickerStyle(.compact)
+                }
+                HStack {
+                    NumericTextField(value: optionalDoubleBinding(\.receiver.approximateWeight), placeholder: "Weight")
+                    Text("lbs").foregroundColor(.secondary)
+                }
+                NumericTextFieldInt(value: optionalIntBinding(\.receiver.pickupNumber), placeholder: "Pickup #")
+                TextField("Extra info", text: optionalStringBinding(\.receiver.extraInfo))
+            }
+            .padding(.top, 8)
+        } label: {
+            sectionLabel("Receiver")
+        }
+        .padding(.horizontal)
+    }
+    
+    // finance section
+    private var financeSection: some View {
+        // finances
+        DisclosureGroup(isExpanded: $showFinances) {
+            VStack(alignment: .leading, spacing: 12) {
+                // Gross
+                TextField("Gross", value: $invoice.gross, format: .number)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                
+                // Lumper cost
+                HStack {
+                    Text("Lumper")
+                    Spacer()
+                    TextField("Lumper", value: Binding(
+                        get: { invoice.lumperCost ?? 0.0 },
+                        set: { invoice.lumperCost = $0 == 0 ? nil : $0 }
+                    ), format: .number)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                }
+                
+                // Factor fee toggle + percent
+                Toggle("Apply factor fee", isOn: $factorEnabled)
+                HStack {
+                    Text("Factor %")
+                    Spacer()
+                    TextField("%", value: $invoice.factorFee, format: .number)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                        .disabled(!factorEnabled)
+                }
+                
+                // Dispatch fee toggle + percent
+                Toggle("Apply dispatch fee", isOn: $dispatchEnabled)
+                HStack {
+                    Text("Dispatch %")
+                    Spacer()
+                    TextField("%", value: Binding(
+                        get: { invoice.dispatchFee ?? 5.0 },
+                        set: { invoice.dispatchFee = $0 }
+                    ), format: .number)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .disabled(!dispatchEnabled)
+                }
+                
+                // Employee cost
+                HStack {
+                    Text("Employee Cost")
+                    Spacer()
+                    TextField("Employee", value: Binding(
+                        get: { invoice.employeeCost ?? 0.0 },
+                        set: { invoice.employeeCost = $0 == 0 ? nil : $0 }
+                    ), format: .number)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                }
+                
+                // Live computed values
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("Computed Dispatch Cost")
+                        Spacer()
+                        Text(computedDispatchCost, format: .currency(code: "USD"))
+                    }
+                    HStack {
+                        Text("Computed Net")
+                        Spacer()
+                        Text(computedNet, format: .currency(code: "USD"))
+                    }
+                }
+                .padding(.top, 8)
+            }
+            .padding(.top, 8)
+        } label: {
+            sectionLabel("Finances")
+        }
+        .padding(.horizontal)
+    }
+    
+    // date section
+    private var dateSection: some View {
+        DisclosureGroup(isExpanded: $showDates) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    DatePicker("Pickup", selection: $invoice.pickupDate, displayedComponents: [.date, .hourAndMinute])
+                        .datePickerStyle(.compact)
+                }
+                HStack {
+                    DatePicker("Delivery", selection: $invoice.deliveryDate,    displayedComponents: [.date, .hourAndMinute])
+                        .datePickerStyle(.compact)
+                }
+                HStack {
+                    DatePicker("Factor Date", selection: Binding(
+                        get: { invoice.factorDate ?? Date() },
+                        set: { invoice.factorDate = $0 }
+                    ), displayedComponents: [.date])
+                    .datePickerStyle(.compact)
+                }
+                HStack {
+                    DatePicker("Factor Due", selection: Binding(
+                        get: { invoice.factorDue ?? Date() },
+                        set: { invoice.factorDue = $0 }
+                    ), displayedComponents: [.date])
+                    .datePickerStyle(.compact)
+                }
+            }
+            .padding(.top, 8)
+        } label: {
+            sectionLabel("Dates")
+        }
+        .padding(.horizontal)
+        
+        Spacer(minLength: 32)
+    }
+    .padding(.top, 12)
     }
     
     // compute totals
@@ -57,7 +279,7 @@ struct InvoiceFormView: View {
         
         // factor fee is a percentage applied to the gross
         if factorEnabled {
-            result -= result * (invoice.factorFee / 100.0)
+            result -= result * ((invoice.factorFee ?? 0) / 100.0)
         }
         
         // dispatch fee percentage applied tot he post-factor result
@@ -76,7 +298,7 @@ struct InvoiceFormView: View {
     private var computedDispatchCost: Double {
         // dispatch cost shown as percentage of the post-factor net
         if dispatchEnabled, let df = invoice.dispatchFee {
-            return computedNet * (df / (100.0 - (factorEnabled ? invoice.factorFee : 0.0)))
+            return computedNet * (df / (100.0 - ((factorEnabled ? invoice.factorFee : 0.0) ?? 0)))
         } else {
             return invoice.dispatchCost ?? 0.0
         }
@@ -88,279 +310,7 @@ struct InvoiceFormView: View {
                 // scrollview for content, fixed totals/footer
                 ScrollView {
                     VStack(spacing: 12) {
-                        // invoice info
-                        DisclosureGroup(isExpanded: $showInvoiceInfo) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                TextField("RK#", text: $invoice.rkNumber)
-                                // optional string for otherNumber
-                                TextField("Other #", text: Binding(
-                                    get: { invoice.otherNumber ?? ""},
-                                    set: { invoice.otherNumber = $0.isEmpty ? nil : $0 }
-                                ))
-                                // broker company name quick edit
-                                TextField("Broker Company Name", text: $invoice.broker.companyName)
-                            }
-                            .padding(.top, 8)
-                        } label: {
-                            sectionLabel("Invoice")
-                        }
-                        .padding(.horizontal)
                         
-                        // broker section
-                        DisclosureGroup(isExpanded: $showBroker) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                TextField("Company", text: $invoice.broker.companyName)
-                                TextField("Address", text: Binding(
-                                    get: { invoice.broker.address ?? "" },
-                                    set: { invoice.broker.address = $0.isEmpty ? nil: $0 }
-                                ))
-                                // PO number optional
-                                HStack {
-                                    Text("PO")
-                                        .foregroundColor(.secondary)
-                                    var brokerPONumberBinding: Binding<Int> {
-                                        Binding(
-                                            get: { invoice.broker.poNumber ?? 0 },
-                                            set: { invoice.broker.poNumber = $0 }
-                                    )}
-                                    NumericTextFieldInt(value: brokerPONumberBinding, placeholder: "PO#")
-                                }
-                                // phone and email
-                                TextField("Phone", text: Binding(
-                                    get: { invoice.broker.phoneNumber ?? "" },
-                                    set: { invoice.broker.phoneNumber = $0.isEmpty ? nil : $0 }
-                                ))
-                                TextField("Email", text: Binding(
-                                    get: { invoice.broker.email ?? "" },
-                                    set: { invoice.broker.email = $0.isEmpty ? nil : $0 }
-                                ))
-                                // numeric temperature (fahrenheit)
-                                HStack {
-                                    NumericTextField(value: Binding(
-                                        get: { invoice.broker.minReeferTemperature ?? 0.0 },
-                                        set: { invoice.broker.minReeferTemperature = $0 }
-                                    ), placeholder: "Min Reefer °F")
-                                    Text("°F")
-                                        .foregroundColor(.secondary)
-                                }
-                                HStack {
-                                    NumericTextField(value: Binding(
-                                        get: { invoice.broker.maxReeferTemperature ?? 0.0 },
-                                        set: { invoice.broker.maxReeferTemperature = $0 }
-                                    ), placeholder: "Max Reefer °F")
-                                    Text("°F")
-                                        .foregroundColor(.secondary)
-                                }
-                                TextField("Extra info", text: Binding(
-                                    get: { invoice.broker.extraInfo ?? "" },
-                                    set: { invoice.broker.extraInfo = $0.isEmpty ? nil : $0 }
-                                ))
-                            }
-                            .padding(.top, 8)
-                        } label: {
-                            sectionLabel("Broker")
-                        }
-                        .padding(.horizontal)
-                        
-                        // shipper
-                        DisclosureGroup(isExpanded: $showShipper) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                TextField("Company", text: $invoice.shipper.companyName)
-                                TextField("Address", text: Binding(
-                                    get: { invoice.shipper.address ?? "" },
-                                    set: { invoice.shipper.address = $0.isEmpty ? nil : $0 }
-                                ))
-                                TextField("Delivery Address", text: Binding(
-                                    get: { invoice.shipper.deliveryAddress ?? "" },
-                                    set: { invoice.shipper.deliveryAddress = $0.isEmpty ? nil : $0 }
-                                ))
-                                HStack {
-                                    DatePicker("Pickup Date/Time", selection: Binding(
-                                        get: { invoice.shipper.pickupDateTime ?? Date() },
-                                        set: { invoice.shipper.pickupDateTime = $0 }
-                                    ), displayedComponents: [.date, .hourAndMinute])
-                                    .datePickerStyle(.compact)
-                                }
-                                HStack {
-                                    NumericTextField(value: Binding(
-                                        get: { invoice.shipper.approximateWeight ?? 0.0 },
-                                        set: { invoice.shipper.approximateWeight = $0 }
-                                    ), placeholder: "Weight")
-                                    Text("lbs").foregroundColor(.secondary)
-                                }
-                                NumericTextFieldInt(value: Binding(
-                                    get: { invoice.shipper.confirmationNumber ?? 0 },
-                                    set: { invoice.shipper.confirmationNumber = $0 }
-                                ), placeholder: "Confirmation #")
-                                TextField("Extra info", text: Binding(
-                                    get: { invoice.shipper.extraInfo ?? "" },
-                                    set: { invoice.shipper.extraInfo = $0.isEmpty ? nil : $0 }
-                                ))
-                            }
-                            .padding(.top, 8)
-                        } label: {
-                            sectionLabel("Shipper")
-                        }
-                        .padding(.horizontal)
-                        
-                        // receiver
-                        DisclosureGroup(isExpanded: $showReceiver) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                TextField("Company", text: $invoice.receiver.companyName)
-                                TextField("Address", text: Binding(
-                                    get: { invoice.receiver.address ?? "" },
-                                    set: { invoice.receiver.address = $0.isEmpty ? nil : $0 }
-                                ))
-                                TextField("Delivery Address", text: Binding(
-                                    get: { invoice.receiver.deliveryAddress ?? "" },
-                                    set: { invoice.receiver.deliveryAddress = $0.isEmpty ? nil : $0 }
-                                ))
-                                HStack {
-                                    DatePicker("Pickup Date/Time", selection: Binding(
-                                        get: { invoice.receiver.pickupDateTime ?? Date() },
-                                        set: { invoice.receiver.pickupDateTime = $0 }
-                                    ), displayedComponents: [.date, .hourAndMinute])
-                                    .datePickerStyle(.compact)
-                                }
-                                HStack {
-                                    NumericTextField(value: Binding(
-                                        get: { invoice.receiver.approximateWeight ?? 0.0 },
-                                        set: { invoice.receiver.approximateWeight = $0 }
-                                    ), placeholder: "Weight")
-                                    Text("lbs").foregroundColor(.secondary)
-                                }
-                                NumericTextFieldInt(value: Binding(
-                                    get: { invoice.receiver.pickupNumber ?? 0 },
-                                    set: { invoice.receiver.pickupNumber = $0 }
-                                ), placeholder: "Pickup #")
-                                TextField("Extra info", text: Binding(
-                                    get: { invoice.receiver.extraInfo ?? "" },
-                                    set: { invoice.receiver.extraInfo = $0.isEmpty ? nil : $0 }
-                                ))
-                            }
-                            .padding(.top, 8)
-                        } label: {
-                            sectionLabel("Receiver")
-                        }
-                        .padding(.horizontal)
-                        
-                        // finances
-                        DisclosureGroup(isExpanded: $showFinances) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                // Gross
-                                HStack {
-                                    Text("Gross")
-                                    Spacer()
-                                    TextField("Gross", value: $invoice.gross, format: .number)
-                                        .keyboardType(.decimalPad)
-                                        .multilineTextAlignment(.trailing)
-                                }
-                                
-                                // Lumper cost
-                                HStack {
-                                    Text("Lumper")
-                                    Spacer()
-                                    TextField("Lumper", value: Binding(
-                                        get: { invoice.lumperCost ?? 0.0 },
-                                        set: { invoice.lumperCost = $0 == 0 ? nil : $0 }
-                                    ), format: .number)
-                                    .keyboardType(.decimalPad)
-                                    .multilineTextAlignment(.trailing)
-                                }
-                                
-                                // Factor fee toggle + percent
-                                Toggle("Apply factor fee", isOn: $factorEnabled)
-                                HStack {
-                                    Text("Factor %")
-                                    Spacer()
-                                    TextField("%", value: $invoice.factorFee, format: .number)
-                                        .keyboardType(.decimalPad)
-                                        .multilineTextAlignment(.trailing)
-                                        .disabled(!factorEnabled)
-                                }
-                                
-                                // Dispatch fee toggle + percent
-                                Toggle("Apply dispatch fee", isOn: $dispatchEnabled)
-                                HStack {
-                                    Text("Dispatch %")
-                                    Spacer()
-                                    TextField("%", value: Binding(
-                                        get: { invoice.dispatchFee ?? 5.0 },
-                                        set: { invoice.dispatchFee = $0 }
-                                    ), format: .number)
-                                    .keyboardType(.decimalPad)
-                                    .multilineTextAlignment(.trailing)
-                                    .disabled(!dispatchEnabled)
-                                }
-                                
-                                // Employee cost
-                                HStack {
-                                    Text("Employee Cost")
-                                    Spacer()
-                                    TextField("Employee", value: Binding(
-                                        get: { invoice.employeeCost ?? 0.0 },
-                                        set: { invoice.employeeCost = $0 == 0 ? nil : $0 }
-                                    ), format: .number)
-                                    .keyboardType(.decimalPad)
-                                    .multilineTextAlignment(.trailing)
-                                }
-                                
-                                // Live computed values
-                                VStack(alignment: .leading) {
-                                    HStack {
-                                        Text("Computed Dispatch Cost")
-                                        Spacer()
-                                        Text(computedDispatchCost, format: .currency(code: "USD"))
-                                    }
-                                    HStack {
-                                        Text("Computed Net")
-                                        Spacer()
-                                        Text(computedNet, format: .currency(code: "USD"))
-                                    }
-                                }
-                                .padding(.top, 8)
-                            }
-                            .padding(.top, 8)
-                        } label: {
-                            sectionLabel("Finances")
-                        }
-                        .padding(.horizontal)
-                        
-                        // dates
-                        DisclosureGroup(isExpanded: $showDates) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    DatePicker("Pickup", selection: $invoice.pickupDate, displayedComponents: [.date, .hourAndMinute])
-                                        .datePickerStyle(.compact)
-                                }
-                                HStack {
-                                    DatePicker("Delivery", selection: $invoice.deliveryDate,    displayedComponents: [.date, .hourAndMinute])
-                                        .datePickerStyle(.compact)
-                                }
-                                HStack {
-                                    DatePicker("Factor Date", selection: Binding(
-                                        get: { invoice.factorDate ?? Date() },
-                                        set: { invoice.factorDate = $0 }
-                                    ), displayedComponents: [.date])
-                                    .datePickerStyle(.compact)
-                                }
-                                HStack {
-                                    DatePicker("Factor Due", selection: Binding(
-                                        get: { invoice.factorDue ?? Date() },
-                                        set: { invoice.factorDue = $0 }
-                                    ), displayedComponents: [.date])
-                                    .datePickerStyle(.compact)
-                                }
-                            }
-                            .padding(.top, 8)
-                        } label: {
-                            sectionLabel("Dates")
-                        }
-                        .padding(.horizontal)
-                        
-                        Spacer(minLength: 32)
-                    }
-                    .padding(.top, 12)
                 } // end of scrollview
                 
                 // footer with dynamic totals and modifications
@@ -430,7 +380,44 @@ struct InvoiceFormView: View {
             Spacer()
         }
     }
+    
+    private func optionalStringBinding(_ kp: WritableKeyPath<Invoice, String?>) -> Binding<String> {
+        Binding<String>(
+            get: { self.invoice[keyPath: kp] ?? "" },
+            set: { newValue in
+                self.invoice[keyPath: kp] = newValue.isEmpty ? nil : newValue
+            }
+        )
+    }
+    
+    private func optionalStringBinding<M>(_ root: WritableKeyPath<Invoice, M>,
+                                          _ kp: WritableKeyPath<M, String?>
+    ) -> Binding<String> {
+        Binding(
+            get: { invoice[keyPath: root][keyPath: kp] ?? "" },
+            set: { invoice[keyPath: root][keyPath: kp] = $0.isEmpty ? nil : $0 }
+        )
+    }
+    
+    private func optionalDoubleBinding(_ kp: WritableKeyPath<Invoice, Double?>, defaultIfNil: Double = 0.0) -> Binding<Double> {
+        Binding<Double>(
+            get: { self.invoice[keyPath: kp] ?? defaultIfNil },
+            set: { newValue in
+                self.invoice[keyPath: kp] = (newValue == defaultIfNil) ? nil : newValue
+            }
+        )
+    }
+    
+    private func optionalIntBinding(_ kp: WritableKeyPath<Invoice, Int?>, defaultIfNil: Int = 0) -> Binding<Int> {
+        Binding<Int>(
+            get: { self.invoice[keyPath: kp] ?? defaultIfNil },
+            set: { newValue in
+                self.invoice[keyPath: kp] = (newValue == defaultIfNil) ? nil : newValue
+            }
+        )
+    }
 }
+
 
 // helper views
 fileprivate struct NumericTextField: View {
@@ -512,5 +499,9 @@ fileprivate struct NumericTextFieldInt: View {
 }
 
 #Preview {
-    //InvoiceFormView()
+    InvoiceFormView(
+        invoice: Invoice.sample(),
+        onSave: { _ in },
+        onDelete: { _ in }
+    )
 }

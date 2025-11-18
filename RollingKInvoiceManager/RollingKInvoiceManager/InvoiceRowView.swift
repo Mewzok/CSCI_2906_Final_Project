@@ -24,7 +24,9 @@ struct InvoiceRowView: View {
         .padding(.vertical, 6)
     }
     
-    private func dateString(_ date: Date) -> String {
+    private func dateString(_ date: Date?) -> String {
+        guard let date else { return "" }
+        
         let f = DateFormatter()
         f.dateStyle = .short
         return f.string(from: date)
