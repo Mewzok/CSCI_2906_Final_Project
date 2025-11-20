@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct HomeView: View {
+    @StateObject var viewModel = HomeViewModel()
     @State private var invoices: [Invoice] = []
     @State private var showingInvoiceForm = false
     @State private var isLoading = true
@@ -107,6 +108,9 @@ struct HomeView: View {
                         .shadow(radius: 8)
                     )
                 }
+            }
+            .onAppear {
+                viewModel.loadAllLogistics()
             }
         }
     }

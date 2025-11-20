@@ -15,6 +15,9 @@ class HomeViewModel: ObservableObject {
     @Published var dispatcherTotal: Double = 0
     @Published var employeeTotal: Double = 0
     @Published var netTotal: Double = 0
+    @Published var brokers: [Broker] = []
+    @Published var shippers: [Shipper] = []
+    @Published var receivers: [Receiver] = []
     
     // preview/testing
     init(previewInvoices: [Invoice]? = nil) {
@@ -38,6 +41,20 @@ class HomeViewModel: ObservableObject {
         }
     }
     
+    // load saved logistics function
+    func loadAllLogistics() {
+        LogisticsService.shared.fetchBrokers { brokers in
+            DispatchQueue.main.async { self.brokers = brokers }
+        }
+        LogisticsService.shared.fetchShippers { shippers in
+            DispatchQueue.main.async { self.shippers = shippers }
+        }
+        LogisticsService.shared.fetchReceivers { receivers in
+            DispatchQueue.main.async { self.receivers = receivers }
+        }
+    }
+    
+    // display totals on home screen
     func recalculateTotals() {
         dispatcherTotal = invoices.reduce(0) {
             $0 + ($1.net * (($1.dispatchFee ?? 0) / 100))
