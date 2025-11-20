@@ -232,40 +232,36 @@ struct InvoiceFormView: View {
     
     // date section
     private var dateSection: some View {
-        DisclosureGroup(isExpanded: $showDates) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    DatePicker("Pickup", selection: $invoice.pickupDate, displayedComponents: [.date, .hourAndMinute])
+        VStack {
+            DisclosureGroup(isExpanded: $showDates) {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        DatePicker("Pickup", selection: optionalDateBinding(\.pickupDate), displayedComponents: [.date, .hourAndMinute])
                         .datePickerStyle(.compact)
-                }
-                HStack {
-                    DatePicker("Delivery", selection: $invoice.deliveryDate,    displayedComponents: [.date, .hourAndMinute])
+                    }
+                    HStack {
+                        DatePicker("Delivery", selection: optionalDateBinding(\.deliveryDate),
+                                   displayedComponents: [.date, .hourAndMinute])
                         .datePickerStyle(.compact)
+                    }
+                    HStack {
+                        DatePicker("Factor Date", selection: optionalDateBinding(\.factorDate), displayedComponents: [.date])
+                        .datePickerStyle(.compact)
+                    }
+                    HStack {
+                        DatePicker("Factor Due", selection: optionalDateBinding(\.factorDue), displayedComponents: [.date])
+                        .datePickerStyle(.compact)
+                    }
                 }
-                HStack {
-                    DatePicker("Factor Date", selection: Binding(
-                        get: { invoice.factorDate ?? Date() },
-                        set: { invoice.factorDate = $0 }
-                    ), displayedComponents: [.date])
-                    .datePickerStyle(.compact)
-                }
-                HStack {
-                    DatePicker("Factor Due", selection: Binding(
-                        get: { invoice.factorDue ?? Date() },
-                        set: { invoice.factorDue = $0 }
-                    ), displayedComponents: [.date])
-                    .datePickerStyle(.compact)
-                }
+                .padding(.top, 8)
+            } label: {
+                sectionLabel("Dates")
             }
-            .padding(.top, 8)
-        } label: {
-            sectionLabel("Dates")
+            .padding(.horizontal)
+            
+            Spacer(minLength: 32)
         }
-        .padding(.horizontal)
-        
-        Spacer(minLength: 32)
-    }
-    .padding(.top, 12)
+        .padding(.top, 12)
     }
     
     // compute totals
@@ -311,65 +307,66 @@ struct InvoiceFormView: View {
                 ScrollView {
                     VStack(spacing: 12) {
                         
-                } // end of scrollview
-                
-                // footer with dynamic totals and modifications
-                VStack(spacing: 8) {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Dispatch")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text(computedDispatchCost, format: .currency(code: "USD"))
-                                .font(.headline)
-                        }
-                        
-                        Spacer()
-                        
-                        VStack(alignment: .trailing) {
-                            Text("Net:")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text(computedNet, format: .currency(code: "USD"))
-                                .font(.headline)
-                        }
-                    }
-                    .padding(.horizontal)
+                    } // end of scrollview
                     
-                    HStack {
-                        Button(role: .destructive) {
-                            // delete if id exists
-                            if let id = invoice.id {
-                                onDelete?(id)
-                                dismiss()
-                            } else {
-                                dismiss()
+                    // footer with dynamic totals and modifications
+                    VStack(spacing: 8) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Dispatch")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text(computedDispatchCost, format: .currency(code: "USD"))
+                                    .font(.headline)
                             }
-                        } label: {
-                            Text(invoice.id == nil ? "Cancel" : "Delete Invoice")
-                                .frame(maxWidth: .infinity)
+                            
+                            Spacer()
+                            
+                            VStack(alignment: .trailing) {
+                                Text("Net:")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text(computedNet, format: .currency(code: "USD"))
+                                    .font(.headline)
+                            }
                         }
+                        .padding(.horizontal)
                         
-                        Button {
-                            // store computed net back on main model before saving
-                            var saved = invoice
-                            saved.net = computedNet
-                            saved.dispatchCost = computedDispatchCost
-                            onSave(saved)
-                            dismiss()
-                        } label: {
-                            Text("Save")
-                                .frame(maxWidth: .infinity)
+                        HStack {
+                            Button(role: .destructive) {
+                                // delete if id exists
+                                if let id = invoice.id {
+                                    onDelete?(id)
+                                    dismiss()
+                                } else {
+                                    dismiss()
+                                }
+                            } label: {
+                                Text(invoice.id == nil ? "Cancel" : "Delete Invoice")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            
+                            Button {
+                                // store computed net back on main model before saving
+                                var saved = invoice
+                                saved.net = computedNet
+                                saved.dispatchCost = computedDispatchCost
+                                onSave(saved)
+                                dismiss()
+                            } label: {
+                                Text("Save")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent)
                         }
-                        .buttonStyle(.borderedProminent)
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
-                }
-                .padding(.vertical, 12)
-                .background(Color(.systemBackground).shadow(radius: 0.5))
-            } // end of vstack
-            .navigationTitle(invoice.id == nil ? "New Invoice" : "Edit Invoice")
-        } // end of navigationview
+                    .padding(.vertical, 12)
+                    .background(Color(.systemBackground).shadow(radius: 0.5))
+                } // end of vstack
+                .navigationTitle(invoice.id == nil ? "New Invoice" : "Edit Invoice")
+            } // end of navigationview
+        } // end of body
     }
     
     // helper functions
@@ -391,7 +388,7 @@ struct InvoiceFormView: View {
     }
     
     private func optionalStringBinding<M>(_ root: WritableKeyPath<Invoice, M>,
-                                          _ kp: WritableKeyPath<M, String?>
+                                              _ kp: WritableKeyPath<M, String?>
     ) -> Binding<String> {
         Binding(
             get: { invoice[keyPath: root][keyPath: kp] ?? "" },
@@ -416,87 +413,94 @@ struct InvoiceFormView: View {
             }
         )
     }
-}
-
-
-// helper views
-fileprivate struct NumericTextField: View {
-    @Binding var value: Double
-    var placeholder: String
     
-    init(value: Binding<Double>, placeholder: String = "") {
-        self._value = value
-        self.placeholder = placeholder
+    private func optionalDateBinding(_ kp: WritableKeyPath<Invoice, Date?>) -> Binding<Date> {
+        Binding<Date>(
+            get: { invoice[keyPath: kp] ?? Date() },
+            set: { invoice[keyPath: kp] = $0 }
+        )
     }
     
-    @State private var text: String = ""
     
-    var body: some View {
-        TextField(placeholder, text: Binding(
-            get: {
-                if text.isEmpty {
-                    if value == 0 {
-                        return ""
+    private struct NumericTextField: View {
+        @Binding var value: Double
+        var placeholder: String
+        
+        init(value: Binding<Double>, placeholder: String = "") {
+            self._value = value
+            self.placeholder = placeholder
+        }
+        
+        @State private var text: String = ""
+        
+        var body: some View {
+            TextField(placeholder, text: Binding(
+                get: {
+                    if text.isEmpty {
+                        if value == 0 {
+                            return ""
+                        }
+                        return String(value)
                     }
-                    return String(value)
-                }
-                return text
-            },
-            set: { new in
-                text = new
-                let cleaned = new.replacingOccurrences(of: ",", with: "")
-                if let d = Double(cleaned) {
-                    value = d
-                } else if new.isEmpty {
-                    value = 0
-                }
-            })
-        )
-        .keyboardType(.decimalPad)
-        .multilineTextAlignment(.trailing)
-        .onAppear {
-            if value != 0 { text = String(value) }
+                    return text
+                },
+                set: { new in
+                    text = new
+                    let cleaned = new.replacingOccurrences(of: ",", with: "")
+                    if let d = Double(cleaned) {
+                        value = d
+                    } else if new.isEmpty {
+                        value = 0
+                    }
+                })
+            )
+            .keyboardType(.decimalPad)
+            .multilineTextAlignment(.trailing)
+            .onAppear {
+                if value != 0 { text = String(value) }
+            }
+        }
+    }
+    
+    // int variant
+    private struct NumericTextFieldInt: View {
+        @Binding var value: Int
+        var placeholder: String
+        
+        init(value: Binding<Int>, placeholder: String = "") {
+            self._value = value
+            self.placeholder = placeholder
+        }
+        
+        @State private var text: String = ""
+        
+        var body: some View {
+            TextField(placeholder, text: Binding(
+                get: {
+                    if text.isEmpty {
+                        return value == 0 ? "" : String(value)
+                    }
+                    return text
+                },
+                set: { new in
+                    text = new
+                    let cleaned = new.replacingOccurrences(of: ",", with: "")
+                    if let i = Int(cleaned) {
+                        value = i
+                    } else if new.isEmpty {
+                        value = 0
+                    }
+                })
+            )
+            .keyboardType(.numberPad)
+            .multilineTextAlignment(.trailing)
+            .onAppear {
+                if value != 0 { text = String(value)}
+            }
         }
     }
 }
 
-// int variant
-fileprivate struct NumericTextFieldInt: View {
-    @Binding var value: Int
-    var placeholder: String
-    
-    init(value: Binding<Int>, placeholder: String = "") {
-        self._value = value
-        self.placeholder = placeholder
-    }
-    
-    @State private var text: String = ""
-    
-    var body: some View {
-        TextField(placeholder, text: Binding(
-            get: {
-                if text.isEmpty {
-                    return value == 0 ? "" : String(value)
-                }
-                return text
-            },
-            set: { new in
-                text = new
-                let cleaned = new.replacingOccurrences(of: ",", with: "")
-                if let i = Int(cleaned) {
-                    value = i
-                } else if new.isEmpty {
-                    value = 0
-                }
-            })
-        )
-        .keyboardType(.numberPad)
-        .multilineTextAlignment(.trailing)
-        .onAppear {
-            if value != 0 { text = String(value)}
-        }
-    }
-}
 
 #Preview {
     InvoiceFormView(
