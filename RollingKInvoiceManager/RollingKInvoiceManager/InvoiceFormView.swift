@@ -9,42 +9,22 @@ import SwiftUI
 
 struct InvoiceFormView: View {
     // create local copy so edits are safe until used
-    @State private var invoice: Invoice
+    @Binding var invoice: Invoice
     let onSave: (Invoice) -> Void
     let onDelete: ((String) -> Void)?
     @Environment(\.dismiss) private var dismiss
     
     // section visibility, create is expanded, edit is collapsed
-    @State private var showInvoiceInfo: Bool
-    @State private var showBroker: Bool
-    @State private var showShipper: Bool
-    @State private var showReceiver: Bool
-    @State private var showFinances: Bool
-    @State private var showDates: Bool
+    @State private var showInvoiceInfo: Bool = true
+    @State private var showBroker: Bool = true
+    @State private var showShipper: Bool = true
+    @State private var showReceiver: Bool = true
+    @State private var showFinances: Bool = true
+    @State private var showDates: Bool = true
     
     // toggles for optional fees
-    @State private var factorEnabled: Bool
-    @State private var dispatchEnabled: Bool
-    
-    init(invoice: Invoice, onSave: @escaping (Invoice) -> Void, onDelete: ((String) -> Void)? = nil) {
-        // local copy
-        self._invoice = State(initialValue: invoice)
-        self.onSave = onSave
-        self.onDelete = onDelete
-        
-        // if invoice.id == nil, it's a new invoice, expand everything
-        let isNew = (invoice.id == nil)
-        self._showInvoiceInfo = State(initialValue: isNew)
-        self._showBroker = State(initialValue: isNew)
-        self._showShipper = State(initialValue: isNew)
-        self._showReceiver = State(initialValue: isNew)
-        self._showFinances = State(initialValue: isNew)
-        self._showDates = State(initialValue: isNew)
-        
-        // toggles. non-zero is automatically enabled
-        self._factorEnabled = State(initialValue: (invoice.factorFee ?? 0) > 0)
-        self._dispatchEnabled = State(initialValue: (invoice.dispatchFee ?? 0) > 0)
-    }
+    @State private var factorEnabled: Bool = false
+    @State private var dispatchEnabled: Bool = false
     
     // invoice section
     private var invoiceSection: some View {
@@ -587,6 +567,19 @@ struct InvoiceFormView: View {
                 .navigationTitle(invoice.id == nil ? "New Invoice" : "Edit Invoice")
             } // end of navigationview
         } // end of body
+        .onAppear {
+            // expand or collapse sections based on if new invoice or editing one
+            let isNew = (invoice.id == nil)
+            showInvoiceInfo = isNew
+            showBroker = isNew
+            showShipper = isNew
+            showReceiver = isNew
+            showFinances = isNew
+            showDates = isNew
+            
+            factorEnabled = (invoice.factorFee ?? 0) > 0
+            dispatchEnabled = (invoice.dispatchFee ?? 0) > 0
+        }
     }
     
     // helper functions
@@ -769,9 +762,16 @@ struct InvoiceFormView: View {
 
 
 #Preview {
-    InvoiceFormView(
-        invoice: Invoice.sample(),
-        onSave: { _ in },
-        onDelete: { _ in }
-    )
+    PreviewWrapper()
+}
+
+private struct PreviewWrapper: View {
+    @State var invoice = Invoice.sample()
+    var body: some View {
+        InvoiceFormView(
+            invoice: $invoice,
+            onSave: { _ in },
+            onDelete: { _ in }
+        )
+    }
 }
