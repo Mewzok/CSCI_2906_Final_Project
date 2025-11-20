@@ -189,10 +189,7 @@ struct InvoiceFormView: View {
                 HStack {
                     Text("Pickup Date/Time")
                     Spacer()
-                    DatePicker("", selection: optionalDateBinding(\.shipper.pickupDateTime), displayedComponents: [.date, .hourAndMinute])
-                        .datePickerStyle(.compact)
-                        .labelsHidden()
-                        .frame(height: 30)
+                    optionalDatePicker(label: "", date: $invoice.shipper.pickupDateTime)
                 }
                 // shipper approximateWeight
                 HStack {
@@ -264,10 +261,7 @@ struct InvoiceFormView: View {
                 HStack {
                     Text("Pickup Date/Time")
                     Spacer()
-                    DatePicker("", selection: optionalDateBinding(\.receiver.pickupDateTime), displayedComponents: [.date, .hourAndMinute])
-                        .datePickerStyle(.compact)
-                        .labelsHidden()
-                        .frame(height: 30)
+                    optionalDatePicker(label: "", date: $invoice.receiver.pickupDateTime)
                 }
                 // receiver approximateWeight
                 HStack {
@@ -317,9 +311,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     HStack {
                         Text("$")
-                        TextField("Gross", value: $invoice.gross, format: .number)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
+                        GrossTextField(value: $invoice.gross, placeholder: "Gross")
                             .frame(maxWidth: 90)
                     }
                 }
@@ -425,21 +417,16 @@ struct InvoiceFormView: View {
             DisclosureGroup(isExpanded: $showDates) {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        DatePicker("Pickup", selection: optionalDateBinding(\.pickupDate), displayedComponents: [.date, .hourAndMinute])
-                        .datePickerStyle(.compact)
+                        optionalDatePicker(label: "Pickup Date", date: $invoice.pickupDate)
                     }
                     HStack {
-                        DatePicker("Delivery", selection: optionalDateBinding(\.deliveryDate),
-                                   displayedComponents: [.date, .hourAndMinute])
-                        .datePickerStyle(.compact)
+                        optionalDatePicker(label: "Delivery Date", date: $invoice.deliveryDate)
                     }
                     HStack {
-                        DatePicker("Factor Date", selection: optionalDateBinding(\.factorDate), displayedComponents: [.date, .hourAndMinute])
-                        .datePickerStyle(.compact)
+                        optionalDatePicker(label: "Factor Date", date: $invoice.factorDate)
                     }
                     HStack {
-                        DatePicker("Factor Due", selection: optionalDateBinding(\.factorDue), displayedComponents: [.date, .hourAndMinute])
-                        .datePickerStyle(.compact)
+                        optionalDatePicker(label: "Factor Due", date: $invoice.factorDue)
                     }
                 }
                 .padding(.top, 8)
@@ -648,6 +635,85 @@ struct InvoiceFormView: View {
             get: { invoice[keyPath: kp] ?? Date() },
             set: { invoice[keyPath: kp] = $0 }
         )
+    }
+    
+    private struct optionalDatePicker: View {
+        var label: String
+        @Binding var date: Date?
+        var defaultDate: Date = Date()
+        
+        @State private var showPicker = false
+        @State private var tempDate: Date = Date()
+        
+        var body: some View {
+            HStack {
+                Text(label)
+                Spacer()
+                if let nonNilDate = date {
+                    DatePicker(label, selection: Binding(
+                        get: { nonNilDate },
+                        set: { date = $0 }),
+                               displayedComponents: [.date, .hourAndMinute]
+                               )
+                    .labelsHidden()
+                    .datePickerStyle(.compact)
+                    .frame(maxHeight: 32)
+                    .frame(maxWidth: 200)
+                    Button(role: .destructive) {
+                        self.date = nil
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                    }
+                } else {
+                    Button("Set Date") {
+                        tempDate = defaultDate
+                        showPicker = true
+                    }
+                    .foregroundColor(.blue)
+                }
+            }
+            .sheet(isPresented: $showPicker) {
+                VStack {
+                    DatePicker("Select Date", selection: $tempDate,
+                               displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .datePickerStyle(.graphical)
+                    .labelsHidden()
+                    Button("Done") {
+                        date = tempDate
+                        showPicker = false
+                    }
+                    .padding(.top)
+                }
+                .padding()
+            }
+        }
+    }
+    
+    private struct GrossTextField: View {
+        @Binding var value: Double
+        var placeholder: String
+        @State private var text: String = ""
+        
+        var body: some View {
+            TextField(placeholder, text: Binding(
+                get: { text },
+                set: { new in
+                    text = new
+                    let cleaned = new.replacingOccurrences(of: ",", with: "")
+                    if let d = Double(cleaned) {
+                        value = d
+                    } else if new.isEmpty {
+                        value = 0
+                    }
+                })
+            )
+            .keyboardType(.decimalPad)
+            .multilineTextAlignment(.trailing)
+            .onAppear {
+                text = value == 0 ? "" : String(value)
+            }
+        }
     }
     
     
