@@ -6,8 +6,10 @@
 //
 
 import Foundation
+import FirebaseFirestore
 
-struct Broker: Codable, Equatable {
+struct Broker: Identifiable, Codable, Equatable {
+    @DocumentID var id: String? = nil
     var companyName: String
     var address: String?
     var phoneNumber: String?
@@ -19,7 +21,8 @@ struct Broker: Codable, Equatable {
     var extraInfo: String?
 }
 
-struct Shipper: Codable, Equatable {
+struct Shipper: Identifiable, Codable, Equatable {
+    @DocumentID var id: String? = nil
     var companyName: String
     var address: String?
     var phoneNumber: String?
@@ -32,7 +35,8 @@ struct Shipper: Codable, Equatable {
     var extraInfo: String?
 }
 
-struct Receiver: Codable, Equatable {
+struct Receiver: Identifiable, Codable, Equatable {
+    @DocumentID var id: String? = nil
     var companyName: String
     var address: String?
     var phoneNumber: String?
