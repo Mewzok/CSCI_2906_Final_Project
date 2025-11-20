@@ -10,6 +10,9 @@ import SwiftUI
 struct InvoiceFormView: View {
     // create local copy so edits are safe until used
     @Binding var invoice: Invoice
+    @Binding var brokers: [Broker]
+    @Binding var shippers: [Shipper]
+    @Binding var receivers: [Receiver]
     let onSave: (Invoice) -> Void
     let onDelete: ((String) -> Void)?
     @Environment(\.dismiss) private var dismiss
@@ -25,6 +28,11 @@ struct InvoiceFormView: View {
     // toggles for optional fees
     @State private var factorEnabled: Bool = false
     @State private var dispatchEnabled: Bool = false
+    
+    // selected logistics for pickers
+    @State private var selectedBrokerID: String? = nil
+    @State private var selectedShipperID: String? = nil
+    @State private var selectedReceiverID: String? = nil
     
     // invoice section
     private var invoiceSection: some View {
@@ -58,6 +66,20 @@ struct InvoiceFormView: View {
     private var brokerSection: some View {
         DisclosureGroup(isExpanded: $showBroker) {
             VStack(alignment: .leading, spacing: 12) {
+                // broker picker
+                Picker("Broker", selection: $selectedBrokerID) {
+                    Text("New Broker").tag(nil as String?)
+                    ForEach(brokers) { broker in
+                        Text(broker.companyName).tag(broker.id)
+                    }
+                }
+                .onChange(of: selectedBrokerID) { id in
+                    if let b = brokers.first(where: { $0.id == id }) {
+                        invoice.broker = b
+                    } else {
+                        invoice.broker = Broker(companyName: "")
+                    }
+                }
                 // broker companyName
                 HStack {
                     Text("Company Name")
@@ -141,6 +163,20 @@ struct InvoiceFormView: View {
         // shipper
         DisclosureGroup(isExpanded: $showShipper) {
             VStack(alignment: .leading, spacing: 12) {
+                // shipper picker
+                Picker("Shipper", selection: $selectedShipperID) {
+                    Text("New Shipper").tag(nil as String?)
+                    ForEach(shippers) { shipper in
+                        Text(shipper.companyName).tag(shipper.id)
+                    }
+                }
+                .onChange(of: selectedShipperID) { id in
+                    if let s = shippers.first(where: { $0.id == id }) {
+                        invoice.shipper = s
+                    } else {
+                        invoice.shipper = Shipper(companyName: "")
+                    }
+                }
                 // shipper companyName
                 HStack {
                     Text("Company Name")
@@ -213,6 +249,20 @@ struct InvoiceFormView: View {
         // receiver
         DisclosureGroup(isExpanded: $showReceiver) {
             VStack(alignment: .leading, spacing: 12) {
+                // receiver picker
+                Picker("Receiver", selection: $selectedReceiverID) {
+                    Text("New Receiver").tag(nil as String?)
+                    ForEach(receivers) { receiver in
+                        Text(receiver.companyName).tag(receiver.id)
+                    }
+                }
+                .onChange(of: selectedReceiverID) { id in
+                    if let r = receivers.first(where: { $0.id == id }) {
+                        invoice.receiver = r
+                    } else {
+                        invoice.receiver = Receiver(companyName: "")
+                    }
+                }
                 // receiver companyName
                 HStack {
                     Text("Company Name")
@@ -579,6 +629,10 @@ struct InvoiceFormView: View {
             
             factorEnabled = (invoice.factorFee ?? 0) > 0
             dispatchEnabled = (invoice.dispatchFee ?? 0) > 0
+            
+            selectedBrokerID = invoice.broker.id
+            selectedShipperID = invoice.shipper.id
+            selectedReceiverID = invoice.receiver.id
         }
     }
     
@@ -767,9 +821,15 @@ struct InvoiceFormView: View {
 
 private struct PreviewWrapper: View {
     @State var invoice = Invoice.sample()
+    @State var brokers = [Invoice.sample().broker]
+    @State var shippers = [Invoice.sample().shipper]
+    @State var receivers = [Invoice.sample().receiver]
     var body: some View {
         InvoiceFormView(
             invoice: $invoice,
+            brokers: $brokers,
+            shippers: $shippers,
+            receivers: $receivers,
             onSave: { _ in },
             onDelete: { _ in }
         )

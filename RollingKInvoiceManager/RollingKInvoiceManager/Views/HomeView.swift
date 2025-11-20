@@ -9,7 +9,6 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject var viewModel = HomeViewModel()
-    @State private var invoices: [Invoice] = []
     @State private var showingInvoiceForm = false
     @State private var isLoading = true
     @State private var errorMessage: String? = nil
@@ -39,14 +38,14 @@ struct HomeView: View {
                             .disabled(isLoading)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if invoices.isEmpty {
+                    } else if viewModel.invoices.isEmpty {
                         Text("No invoices found")
                             .padding()
                         Spacer()
                     } else {
                         ScrollView {
                             VStack(spacing: 0) {
-                                ForEach(invoices) { invoice in
+                                ForEach(viewModel.invoices) { invoice in
                                     InvoiceRowView(invoice: invoice)
                                         .contentShape(Rectangle())
                                         .onTapGesture {
@@ -72,7 +71,7 @@ struct HomeView: View {
                     }
                 }
                 .sheet(isPresented: $showingInvoiceForm) {
-                    InvoiceFormView(invoice: $currentInvoice, onSave: { savedInvoice in
+                    InvoiceFormView(invoice: $currentInvoice, brokers: $viewModel.brokers, shippers: $viewModel.shippers, receivers: $viewModel.receivers, onSave: { savedInvoice in
                         if savedInvoice.id == nil {
                             // new invoice, add new
                             InvoiceService.shared.addInvoice(savedInvoice) { _ in fetchInvoices() }
@@ -122,10 +121,10 @@ struct HomeView: View {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let fetched):
-                    invoices = fetched
+                    viewModel.invoices = fetched
                 case .failure(let error):
                     print("Error fetching invoices \(error)")
-                    invoices = []
+                    viewModel.invoices = []
                     errorMessage = "Could not load invoices. Please check your internet and try again."
                 }
                 isLoading = false
