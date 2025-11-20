@@ -56,7 +56,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     TextField("RK#", text: $invoice.rkNumber)
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 // otherNumber
                 HStack {
@@ -64,7 +64,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     TextField("Other #", text: optionalStringBinding(\.otherNumber))
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
             }
             .padding(.top, 8)
@@ -84,7 +84,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     TextField("Company Name", text: $invoice.broker.companyName)
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 // broker address
                 HStack {
@@ -92,7 +92,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     TextField("Address", text: optionalStringBinding(\.broker.address))
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 HStack {
                     //poNumber
@@ -100,7 +100,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     NumericTextFieldInt(value: optionalIntBinding(\.broker.poNumber), placeholder: "PO#")
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 // broker phoneNumber
                 HStack {
@@ -108,7 +108,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     TextField("Phone", text: optionalStringBinding(\.broker.phoneNumber))
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 // broker email
                 HStack {
@@ -116,7 +116,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     TextField("Email", text: optionalStringBinding(\.broker.email))
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 // broker minReeferTemperature
                 HStack {
@@ -167,7 +167,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     TextField("Company Name", text: $invoice.shipper.companyName)
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 // shipper address
                 HStack {
@@ -175,7 +175,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     TextField("Address", text: optionalStringBinding(\.shipper.address))
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 // shipper deliveryAddress
                 HStack {
@@ -183,7 +183,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     TextField("Delivery Address", text: optionalStringBinding(\.shipper.deliveryAddress))
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 // shipper pickupDateTime
                 HStack {
@@ -209,7 +209,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     NumericTextFieldInt(value: optionalIntBinding(\.shipper.confirmationNumber), placeholder: "Confirmation #")
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 // shipper extraInfo
                 VStack(alignment: .leading, spacing: 6) {
@@ -242,7 +242,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     TextField("Company Name", text: $invoice.receiver.companyName)
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 // receiver address
                 HStack {
@@ -250,7 +250,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     TextField("Address", text: optionalStringBinding(\.receiver.address))
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 // receiver deliveryAddress
                 HStack {
@@ -258,7 +258,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     TextField("Delivery Address", text: optionalStringBinding(\.receiver.deliveryAddress))
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 // receiver pickupDateTime
                 HStack {
@@ -284,7 +284,7 @@ struct InvoiceFormView: View {
                     Spacer()
                     NumericTextFieldInt(value: optionalIntBinding(\.receiver.pickupNumber), placeholder: "Pickup #")
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 140)
+                        .frame(maxWidth: 180)
                 }
                 // receiver extraInfo
                 VStack(alignment: .leading, spacing: 6) {
@@ -519,7 +519,7 @@ struct InvoiceFormView: View {
                                 Text("Lumper")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
-                                Text(optionalDoubleBinding(\.lumperCost).wrappedValue, format: .currency(code: "USD"))
+                                Text(optionalDoubleBinding(\.lumperCost).wrappedValue ?? 0, format: .currency(code: "USD"))
                                     .font(.headline)
                             }
                             
@@ -549,7 +549,7 @@ struct InvoiceFormView: View {
                                 Text("Employee")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
-                                Text(optionalDoubleBinding(\.employeeCost).wrappedValue, format: .currency(code: "USD"))
+                                Text(optionalDoubleBinding(\.employeeCost).wrappedValue ?? 0.0, format: .currency(code: "USD"))
                                     .font(.headline)
                             }
                             
@@ -629,21 +629,17 @@ struct InvoiceFormView: View {
         )
     }
     
-    private func optionalDoubleBinding(_ kp: WritableKeyPath<Invoice, Double?>, defaultIfNil: Double = 0.0) -> Binding<Double> {
-        Binding<Double>(
-            get: { self.invoice[keyPath: kp] ?? defaultIfNil },
-            set: { newValue in
-                self.invoice[keyPath: kp] = (newValue == defaultIfNil) ? nil : newValue
-            }
+    private func optionalDoubleBinding(_ kp: WritableKeyPath<Invoice, Double?>) -> Binding<Double?> {
+        Binding<Double?>(
+            get: { self.invoice[keyPath: kp] },
+            set: { self.invoice[keyPath: kp] = $0 }
         )
     }
     
-    private func optionalIntBinding(_ kp: WritableKeyPath<Invoice, Int?>, defaultIfNil: Int = 0) -> Binding<Int> {
-        Binding<Int>(
-            get: { self.invoice[keyPath: kp] ?? defaultIfNil },
-            set: { newValue in
-                self.invoice[keyPath: kp] = (newValue == defaultIfNil) ? nil : newValue
-            }
+    private func optionalIntBinding(_ kp: WritableKeyPath<Invoice, Int?>) -> Binding<Int?> {
+        Binding<Int?>(
+            get: { self.invoice[keyPath: kp] },
+            set: { self.invoice[keyPath: kp] = $0 }
         )
     }
     
@@ -656,27 +652,13 @@ struct InvoiceFormView: View {
     
     
     private struct NumericTextField: View {
-        @Binding var value: Double
+        @Binding var value: Double?
         var placeholder: String
-        
-        init(value: Binding<Double>, placeholder: String = "") {
-            self._value = value
-            self.placeholder = placeholder
-        }
-        
         @State private var text: String = ""
         
         var body: some View {
             TextField(placeholder, text: Binding(
-                get: {
-                    if text.isEmpty {
-                        if value == 0 {
-                            return ""
-                        }
-                        return String(value)
-                    }
-                    return text
-                },
+                get: { text },
                 set: { new in
                     text = new
                     let cleaned = new.replacingOccurrences(of: ",", with: "")
@@ -689,32 +671,19 @@ struct InvoiceFormView: View {
             )
             .keyboardType(.decimalPad)
             .multilineTextAlignment(.trailing)
-            .onAppear {
-                if value != 0 { text = String(value) }
-            }
+            .onAppear { text = value != nil ? String(value!) : "" }
         }
     }
     
     // int variant
     private struct NumericTextFieldInt: View {
-        @Binding var value: Int
+        @Binding var value: Int?
         var placeholder: String
-        
-        init(value: Binding<Int>, placeholder: String = "") {
-            self._value = value
-            self.placeholder = placeholder
-        }
-        
         @State private var text: String = ""
         
         var body: some View {
             TextField(placeholder, text: Binding(
-                get: {
-                    if text.isEmpty {
-                        return value == 0 ? "" : String(value)
-                    }
-                    return text
-                },
+                get: { text },
                 set: { new in
                     text = new
                     let cleaned = new.replacingOccurrences(of: ",", with: "")
@@ -727,9 +696,7 @@ struct InvoiceFormView: View {
             )
             .keyboardType(.numberPad)
             .multilineTextAlignment(.trailing)
-            .onAppear {
-                if value != 0 { text = String(value)}
-            }
+            .onAppear { text = value != nil ? String(value!) : "" }
         }
     }
 }
