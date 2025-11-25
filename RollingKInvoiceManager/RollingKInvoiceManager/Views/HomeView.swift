@@ -62,6 +62,34 @@ struct HomeView: View {
                 }
                 .navigationTitle("Invoices")
                 .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Menu {
+                            NavigationLink("Manage Brokers") {
+                                ManageLogisticsView(kind: .broker,
+                                                    brokers: $viewModel.brokers,
+                                                    shippers: $viewModel.shippers,
+                                                    receivers: $viewModel.receivers)
+                            }
+                            NavigationLink("Manage Shippers") {
+                                ManageLogisticsView(kind: .shipper,
+                                                    brokers: $viewModel.brokers,
+                                                    shippers: $viewModel.shippers,
+                                                    receivers: $viewModel.receivers)
+                            }
+                            NavigationLink("Manage Receivers") {
+                                ManageLogisticsView(kind: .receiver,
+                                                    brokers: $viewModel.brokers,
+                                                    shippers: $viewModel.shippers,
+                                                    receivers: $viewModel.receivers)
+                            }
+                            Button("Refresh Logistics") {
+                                viewModel.loadAllLogistics()
+                            }
+                        } label: {
+                            Text("Manage Logistics")
+                        }
+                    }
+                    
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button("New Invoice") {
                             // creating new invoice
