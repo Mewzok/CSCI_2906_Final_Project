@@ -35,7 +35,8 @@ struct InvoiceFormView: View {
     @State private var selectedReceiverID: String? = nil
     
     // alerts
-    private enum SaveItem { case broker, shipper, receiver }
+    private enum SaveItem { case addBroker, addShipper, addReceiver
+        case updateBroker(id: String), updateShipper(id: String), updateReceiver(id: String) }
     @State private var saveQueue: [SaveItem] = []
     @State private var currentSaveItem: SaveItem? = nil
     @State private var showSaveConfirm: Bool = false
@@ -612,15 +613,24 @@ struct InvoiceFormView: View {
                                 let title: String
                                 let message: String
                                 switch currentSaveItem {
-                                case .broker:
+                                case .addBroker:
                                     title = "Save new Broker?"
                                     message = "Would you like to save broker '\(invoice.broker.companyName)'?"
-                                case .shipper:
+                                case .updateBroker:
+                                    title = "Update Broker?"
+                                    message = "Would you like to update broker '\(invoice.broker.companyName)' with current fields?"
+                                case .addShipper:
                                     title = "Save new Shipper?"
                                     message = "Would you like to save shipper '\(invoice.shipper.companyName)'?"
-                                case .receiver:
+                                case .updateShipper:
+                                    title = "Update Shipper?"
+                                    message = "Would you like to update shipper '\(invoice.shipper.companyName)' with current fields?"
+                                case .addReceiver:
                                     title = "Save new Receiver?"
                                     message = "Would you like to save receiver '\(invoice.receiver.companyName)'?"
+                                case .updateReceiver:
+                                    title = "Update Receiver?"
+                                    message = "Would you like to update receiver '\(invoice.receiver.companyName)' with current fields?"
                                 case .none:
                                     title = ""
                                     message = ""
@@ -859,20 +869,50 @@ struct InvoiceFormView: View {
         saveQueue = []
         
         // build queue for new items in order: broker, shipper, receiver
-        let isNewBroker = !brokers.contains { $0.companyName.lowercased() == invoice.broker.companyName.lowercased() && !$0.companyName.isEmpty }
-        let isNewShipper = !shippers.contains { $0.companyName.lowercased() == invoice.shipper.companyName.lowercased() && !$0.companyName.isEmpty }
-        let isNewReceiver = !receivers.contains { $0.companyName.lowercased() == invoice.receiver.companyName.lowercased() && !$0.companyName.isEmpty }
-        
-        if isNewBroker {
-            saveQueue.append(.broker)
+        // also check for creating new or modifying old
+        let brokerName = invoice.broker.companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !brokerName.isEmpty {
+            if let selectedID = selectedBrokerID, let stored = brokers.first(where: { $0.id == selectedID }) {
+                if stored != invoice.broker {
+                    saveQueue.append(.updateBroker(id: selectedID))
+                }
+            } else {
+                // not selected or selected is nil, maybe new
+                let existsByName = brokers.contains { $0.companyName.lowercased() == brokerName.lowercased() }
+                if !existsByName {
+                    saveQueue.append(.addBroker)
+                }
+            }
         }
         
-        if isNewShipper {
-            saveQueue.append(.shipper)
+        let shipperName = invoice.shipper.companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !shipperName.isEmpty {
+            if let selectedID = selectedShipperID, let stored = shippers.first(where: { $0.id == selectedID }) {
+                if stored != invoice.shipper {
+                    saveQueue.append(.updateShipper(id: selectedID))
+                }
+            } else {
+                // not selected or selected is nil, maybe new
+                let existsByName = shippers.contains { $0.companyName.lowercased() == shipperName.lowercased() }
+                if !existsByName {
+                    saveQueue.append(.addShipper)
+                }
+            }
         }
         
-        if isNewReceiver {
-            saveQueue.append(.receiver)
+        let receiverName = invoice.receiver.companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !receiverName.isEmpty {
+            if let selectedID = selectedReceiverID, let stored = receivers.first(where: { $0.id == selectedID }) {
+                if stored != invoice.receiver {
+                    saveQueue.append(.updateReceiver(id: selectedID))
+                }
+            } else {
+                // not selected or selected is nil, maybe new
+                let existsByName = receivers.contains { $0.companyName.lowercased() == receiverName.lowercased() }
+                if !existsByName {
+                    saveQueue.append(.addReceiver)
+                }
+            }
         }
         
         if saveQueue.isEmpty {
@@ -904,7 +944,7 @@ struct InvoiceFormView: View {
         showSaveConfirm = false
         
         switch item {
-        case .broker:
+        case .addBroker:
             LogisticsService.shared.addBroker(invoice.broker) {
                 success in
                 DispatchQueue.main.async {
@@ -914,7 +954,24 @@ struct InvoiceFormView: View {
                     presentNextSaveItem()
                 }
             }
-        case .shipper:
+        case .updateBroker(let id):
+            var updated = invoice.broker
+            updated.id = id
+            LogisticsService.shared.updateBroker(updated) {
+                success in
+                DispatchQueue.main.async {
+                    if success {
+                        // refresh local copy
+                        if let idx = brokers.firstIndex(where: {
+                            $0.id == id
+                        }) {
+                            brokers[idx] = updated
+                        }
+                    }
+                    presentNextSaveItem()
+                }
+            }
+        case .addShipper:
             LogisticsService.shared.addShipper(invoice.shipper) {
                 success in
                 DispatchQueue.main.async {
@@ -924,12 +981,46 @@ struct InvoiceFormView: View {
                     presentNextSaveItem()
                 }
             }
-        case .receiver:
+        case .updateShipper(let id):
+            var updated = invoice.shipper
+            updated.id = id
+            LogisticsService.shared.updateShipper(updated) {
+                success in
+                DispatchQueue.main.async {
+                    if success {
+                        // refresh local copy
+                        if let idx = shippers.firstIndex(where: {
+                            $0.id == id
+                        }) {
+                            shippers[idx] = updated
+                        }
+                    }
+                    presentNextSaveItem()
+                }
+            }
+        case .addReceiver:
             LogisticsService.shared.addReceiver(invoice.receiver) {
                 success in
                 DispatchQueue.main.async {
                     if success {
                         receivers.append(invoice.receiver)
+                    }
+                    presentNextSaveItem()
+                }
+            }
+        case .updateReceiver(let id):
+            var updated = invoice.receiver
+            updated.id = id
+            LogisticsService.shared.updateReceiver(updated) {
+                success in
+                DispatchQueue.main.async {
+                    if success {
+                        // refresh local copy
+                        if let idx = receivers.firstIndex(where: {
+                            $0.id == id
+                        }) {
+                            receivers[idx] = updated
+                        }
                     }
                     presentNextSaveItem()
                 }
