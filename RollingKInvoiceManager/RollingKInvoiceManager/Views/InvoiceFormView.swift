@@ -83,9 +83,18 @@ struct InvoiceFormView: View {
                 }
                 .onChange(of: selectedBrokerID) { id in
                     if let b = brokers.first(where: { $0.id == id }) {
-                        invoice.broker = b
+                        // copy only saved fields
+                        invoice.broker.companyName = b.companyName
+                        invoice.broker.address = b.address
+                        invoice.broker.phoneNumber = b.phoneNumber
+                        invoice.broker.email = b.email
+                        invoice.broker.brokerName = b.brokerName
                     } else {
-                        invoice.broker = Broker(companyName: "")
+                        invoice.broker.companyName = ""
+                        invoice.broker.address = nil
+                        invoice.broker.phoneNumber = nil
+                        invoice.broker.email = nil
+                        invoice.broker.brokerName = nil
                     }
                 }
                 // broker companyName
@@ -188,9 +197,13 @@ struct InvoiceFormView: View {
                 }
                 .onChange(of: selectedShipperID) { id in
                     if let s = shippers.first(where: { $0.id == id }) {
-                        invoice.shipper = s
+                        invoice.shipper.companyName = s.companyName
+                        invoice.shipper.address = s.address
+                        invoice.shipper.phoneNumber = s.phoneNumber
                     } else {
-                        invoice.shipper = Shipper(companyName: "")
+                        invoice.shipper.companyName = ""
+                        invoice.shipper.address = nil
+                        invoice.shipper.phoneNumber = nil
                     }
                 }
                 // shipper companyName
@@ -300,9 +313,13 @@ struct InvoiceFormView: View {
                 }
                 .onChange(of: selectedReceiverID) { id in
                     if let r = receivers.first(where: { $0.id == id }) {
-                        invoice.receiver = r
+                        invoice.receiver.companyName = r.companyName
+                        invoice.receiver.address = r.address
+                        invoice.receiver.phoneNumber = r.phoneNumber
                     } else {
-                        invoice.receiver = Receiver(companyName: "")
+                        invoice.receiver.companyName = ""
+                        invoice.receiver.address = nil
+                        invoice.receiver.phoneNumber = nil
                     }
                 }
                 // receiver companyName
@@ -931,6 +948,7 @@ struct InvoiceFormView: View {
         // build queue for new items in order: broker, shipper, receiver
         // also check for creating new or modifying old
         let brokerName = invoice.broker.companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isNewBroker = !brokers.contains { $0.companyName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == brokerName.lowercased() } && !brokerName.isEmpty
         if !brokerName.isEmpty {
             if let selectedID = selectedBrokerID, let stored = brokers.first(where: { $0.id == selectedID }) {
                 if stored != invoice.broker {
@@ -1005,7 +1023,8 @@ struct InvoiceFormView: View {
         
         switch item {
         case .addBroker:
-            LogisticsService.shared.addBroker(invoice.broker) {
+            let toSave = invoice.broker.persistedVariant()
+            LogisticsService.shared.addBroker(toSave) {
                 success in
                 DispatchQueue.main.async {
                     if success {
@@ -1032,7 +1051,8 @@ struct InvoiceFormView: View {
                 }
             }
         case .addShipper:
-            LogisticsService.shared.addShipper(invoice.shipper) {
+            let toSave = invoice.shipper.persistedVariant()
+            LogisticsService.shared.addShipper(toSave) {
                 success in
                 DispatchQueue.main.async {
                     if success {
@@ -1059,7 +1079,8 @@ struct InvoiceFormView: View {
                 }
             }
         case .addReceiver:
-            LogisticsService.shared.addReceiver(invoice.receiver) {
+            let toSave = invoice.receiver.persistedVariant()
+            LogisticsService.shared.addReceiver(toSave) {
                 success in
                 DispatchQueue.main.async {
                     if success {
