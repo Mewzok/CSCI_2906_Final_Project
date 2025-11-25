@@ -104,14 +104,6 @@ struct InvoiceFormView: View {
                         .multilineTextAlignment(.trailing)
                         .frame(maxWidth: 180)
                 }
-                HStack {
-                    //poNumber
-                    Text("PO#")
-                    Spacer()
-                    NumericTextFieldInt(value: optionalIntBinding(\.broker.poNumber), placeholder: "PO#")
-                        .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 180)
-                }
                 // broker phoneNumber
                 HStack {
                     Text("Phone Number")
@@ -125,6 +117,22 @@ struct InvoiceFormView: View {
                     Text("Broker Email")
                     Spacer()
                     TextField("Email", text: optionalStringBinding(\.broker.email))
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 180)
+                }
+                // broker name
+                HStack {
+                    Text("Broker Name")
+                    Spacer()
+                    TextField("Name", text: optionalStringBinding(\.broker.brokerName))
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 180)
+                }
+                HStack {
+                    //poNumber
+                    Text("PO#")
+                    Spacer()
+                    NumericTextFieldInt(value: optionalIntBinding(\.broker.poNumber), placeholder: "PO#")
                         .multilineTextAlignment(.trailing)
                         .frame(maxWidth: 180)
                 }
@@ -201,6 +209,22 @@ struct InvoiceFormView: View {
                         .multilineTextAlignment(.trailing)
                         .frame(maxWidth: 180)
                 }
+                // shipper phoneNumber
+                HStack {
+                    Text("Phone Number")
+                    Spacer()
+                    TextField("Phone", text: optionalStringBinding(\.shipper.phoneNumber))
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 180)
+                }
+                //shipper confirmationNumber
+                HStack {
+                    Text("Confirmation #")
+                    Spacer()
+                    NumericTextFieldInt(value: optionalIntBinding(\.shipper.confirmationNumber), placeholder: "Confirmation #")
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 180)
+                }
                 // shipper deliveryAddress
                 HStack {
                     Text("Delivery Address")
@@ -224,13 +248,23 @@ struct InvoiceFormView: View {
                         .frame(maxWidth: 90)
                     Text("lbs").foregroundColor(.secondary)
                 }
-                //shipper confirmationNumber
+                // shipper minReeferTemperature
                 HStack {
-                    Text("Confirmation #")
+                    Text("Shipper Min Temperature")
                     Spacer()
-                    NumericTextFieldInt(value: optionalIntBinding(\.shipper.confirmationNumber), placeholder: "Confirmation #")
+                    NumericTextField(value: optionalDoubleBinding(\.shipper.minReeferTemperature), placeholder: "Reefer min")
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 180)
+                        .frame(maxWidth: 90)
+                    Text("°F").foregroundColor(.secondary)
+                }
+                // shipper maxReeferTemperature
+                HStack {
+                    Text("Shipper Max Temperature")
+                    Spacer()
+                    NumericTextField(value: optionalDoubleBinding(\.shipper.maxReeferTemperature), placeholder: "Reefer max")
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 90)
+                    Text("°F").foregroundColor(.secondary)
                 }
                 // shipper extraInfo
                 VStack(alignment: .leading, spacing: 6) {
@@ -287,6 +321,22 @@ struct InvoiceFormView: View {
                         .multilineTextAlignment(.trailing)
                         .frame(maxWidth: 180)
                 }
+                // receiver phoneNumber
+                HStack {
+                    Text("Phone Number")
+                    Spacer()
+                    TextField("Phone", text: optionalStringBinding(\.receiver.phoneNumber))
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 180)
+                }
+                // receiver pickupNumber
+                HStack {
+                    Text("Pickup #")
+                    Spacer()
+                    NumericTextFieldInt(value: optionalIntBinding(\.receiver.pickupNumber), placeholder: "Pickup #")
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 180)
+                }
                 // receiver deliveryAddress
                 HStack {
                     Text("Delivery Address")
@@ -310,13 +360,23 @@ struct InvoiceFormView: View {
                         .frame(maxWidth: 90)
                     Text("lbs").foregroundColor(.secondary)
                 }
-                // receiver pickupNumber
+                // broker minReeferTemperature
                 HStack {
-                    Text("Pickup #")
+                    Text("Receiver Min Temperature")
                     Spacer()
-                    NumericTextFieldInt(value: optionalIntBinding(\.receiver.pickupNumber), placeholder: "Pickup #")
+                    NumericTextField(value: optionalDoubleBinding(\.receiver.minReeferTemperature), placeholder: "Reefer min")
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 180)
+                        .frame(maxWidth: 90)
+                    Text("°F").foregroundColor(.secondary)
+                }
+                // receiver maxReeferTemperature
+                HStack {
+                    Text("Receiver Max Temperature")
+                    Spacer()
+                    NumericTextField(value: optionalDoubleBinding(\.receiver.maxReeferTemperature), placeholder: "Reefer max")
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 90)
+                    Text("°F").foregroundColor(.secondary)
                 }
                 // receiver extraInfo
                 VStack(alignment: .leading, spacing: 6) {
