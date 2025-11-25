@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct InvoiceFormView: View {
+    @StateObject var viewModel = HomeViewModel()
+    
     // create local copy so edits are safe until used
     @Binding var invoice: Invoice
     @Binding var brokers: [Broker]
@@ -41,6 +43,8 @@ struct InvoiceFormView: View {
     @State private var currentSaveItem: SaveItem? = nil
     @State private var showSaveConfirm: Bool = false
     @State private var saveInProgress: Bool = false
+    @State private var showingValidationError = false
+    @State private var validationErrorMessage = ""
     
     // invoice section
     private var invoiceSection: some View {
@@ -679,6 +683,11 @@ struct InvoiceFormView: View {
                             }
                             
                             Button {
+                                guard validateInvoice(invoice)
+                                else {
+                                    return
+                                }
+                                
                                 beginSaveProcess()
                             } label: {
                                 Text("Save")
@@ -691,22 +700,22 @@ struct InvoiceFormView: View {
                                 let message: String
                                 switch currentSaveItem {
                                 case .addBroker:
-                                    title = "Save new Broker?"
+                                    title = "Save new broker?"
                                     message = "Would you like to save broker '\(invoice.broker.companyName)'?"
                                 case .updateBroker:
-                                    title = "Update Broker?"
+                                    title = "Update broker?"
                                     message = "Would you like to update broker '\(invoice.broker.companyName)' with current fields?"
                                 case .addShipper:
-                                    title = "Save new Shipper?"
+                                    title = "Save new shipper?"
                                     message = "Would you like to save shipper '\(invoice.shipper.companyName)'?"
                                 case .updateShipper:
-                                    title = "Update Shipper?"
+                                    title = "Update shipper?"
                                     message = "Would you like to update shipper '\(invoice.shipper.companyName)' with current fields?"
                                 case .addReceiver:
-                                    title = "Save new Receiver?"
+                                    title = "Save new receiver?"
                                     message = "Would you like to save receiver '\(invoice.receiver.companyName)'?"
                                 case .updateReceiver:
-                                    title = "Update Receiver?"
+                                    title = "Update receiver?"
                                     message = "Would you like to update receiver '\(invoice.receiver.companyName)' with current fields?"
                                 case .none:
                                     title = ""
@@ -719,7 +728,7 @@ struct InvoiceFormView: View {
                                     primaryButton: .default(Text("Yes")) {
                                         handleConfirmSaveCurrentItem()
                                     },
-                                    secondaryButton: .cancel {
+                                    secondaryButton: .cancel(Text("No")) {
                                         handleSkipSaveCurrentItem()
                                     }
                                 )
@@ -730,6 +739,11 @@ struct InvoiceFormView: View {
                     .padding(.vertical, 12)
                     .background(Color(.systemBackground).shadow(radius: 0.5))
                 } // end of vstack
+                .alert("Missing Required Info", isPresented: $showingValidationError) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text(validationErrorMessage)
+                }
                 .navigationTitle(invoice.id == nil ? "New Invoice" : "Edit Invoice")
             } // end of navigationview
         } // end of body
@@ -943,53 +957,61 @@ struct InvoiceFormView: View {
         else {
             return
         }
+        
+        guard invoice.broker.isValid
+        else {
+            validationErrorMessage = "Broker must have a company name."
+            showingValidationError = true
+            return
+        }
+        
+        guard invoice.shipper.isValid
+        else {
+            validationErrorMessage = "Shipper must have a company name."
+            showingValidationError = true
+            return
+        }
+        
+        guard invoice.receiver.isValid
+        else {
+            validationErrorMessage = "Receiver must have a company name."
+            showingValidationError = true
+            return
+        }
+        
         saveQueue = []
         
         // build queue for new items in order: broker, shipper, receiver
         // also check for creating new or modifying old
         let brokerName = invoice.broker.companyName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let isNewBroker = !brokers.contains { $0.companyName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == brokerName.lowercased() } && !brokerName.isEmpty
-        if !brokerName.isEmpty {
-            if let selectedID = selectedBrokerID, let stored = brokers.first(where: { $0.id == selectedID }) {
-                if stored != invoice.broker {
-                    saveQueue.append(.updateBroker(id: selectedID))
-                }
-            } else {
-                // not selected or selected is nil, maybe new
-                let existsByName = brokers.contains { $0.companyName.lowercased() == brokerName.lowercased() }
-                if !existsByName {
-                    saveQueue.append(.addBroker)
-                }
-            }
+        let isNewBroker = !brokerName.isEmpty && !brokers.contains { $0.companyName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == brokerName.lowercased() }
+        if isNewBroker {
+            saveQueue.append(.addBroker)
+        } else if let selectedID = selectedBrokerID,
+                  let stored = brokers.first(where: { $0.id == selectedID }),
+                  !stored.persistedEquals(invoice.broker) {
+            saveQueue.append(.updateBroker(id: selectedID))
         }
         
         let shipperName = invoice.shipper.companyName.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !shipperName.isEmpty {
-            if let selectedID = selectedShipperID, let stored = shippers.first(where: { $0.id == selectedID }) {
-                if stored != invoice.shipper {
-                    saveQueue.append(.updateShipper(id: selectedID))
-                }
-            } else {
-                // not selected or selected is nil, maybe new
-                let existsByName = shippers.contains { $0.companyName.lowercased() == shipperName.lowercased() }
-                if !existsByName {
-                    saveQueue.append(.addShipper)
-                }
-            }
+        let isNewShipper = !shipperName.isEmpty && !shippers.contains { $0.companyName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == shipperName.lowercased() }
+        if isNewShipper {
+            saveQueue.append(.addShipper)
+        } else if let selectedID = selectedShipperID,
+                  let stored = shippers.first(where: { $0.id == selectedID }),
+                  !stored.persistedEquals(invoice.shipper) {
+            saveQueue.append(.updateShipper(id: selectedID))
         }
         
         let receiverName = invoice.receiver.companyName.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !receiverName.isEmpty {
-            if let selectedID = selectedReceiverID, let stored = receivers.first(where: { $0.id == selectedID }) {
-                if stored != invoice.receiver {
-                    saveQueue.append(.updateReceiver(id: selectedID))
-                }
-            } else {
-                // not selected or selected is nil, maybe new
-                let existsByName = receivers.contains { $0.companyName.lowercased() == receiverName.lowercased() }
-                if !existsByName {
-                    saveQueue.append(.addReceiver)
-                }
+        let isNewReceiver = !receiverName.isEmpty && !receivers.contains { $0.companyName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == receiverName.lowercased() }
+        if isNewReceiver {
+            if isNewReceiver {
+                saveQueue.append(.addReceiver)
+            } else if let selectedID = selectedReceiverID,
+                      let stored = receivers.first(where: { $0.id == selectedID }),
+                      !stored.persistedEquals(invoice.receiver) {
+                saveQueue.append(.updateReceiver(id: selectedID))
             }
         }
         
@@ -1006,6 +1028,7 @@ struct InvoiceFormView: View {
         if saveQueue.isEmpty {
             // current save is done
             saveInProgress = false
+            currentSaveItem = nil
             save()
             return
         }
@@ -1028,7 +1051,7 @@ struct InvoiceFormView: View {
                 success in
                 DispatchQueue.main.async {
                     if success {
-                        brokers.append(invoice.broker)
+                        viewModel.loadAllLogistics()
                     }
                     presentNextSaveItem()
                 }
@@ -1036,7 +1059,8 @@ struct InvoiceFormView: View {
         case .updateBroker(let id):
             var updated = invoice.broker
             updated.id = id
-            LogisticsService.shared.updateBroker(updated) {
+            let trimmed = updated.persistedVariant()
+            LogisticsService.shared.updateBroker(trimmed) {
                 success in
                 DispatchQueue.main.async {
                     if success {
@@ -1056,7 +1080,7 @@ struct InvoiceFormView: View {
                 success in
                 DispatchQueue.main.async {
                     if success {
-                        shippers.append(invoice.shipper)
+                        viewModel.loadAllLogistics()
                     }
                     presentNextSaveItem()
                 }
@@ -1064,7 +1088,8 @@ struct InvoiceFormView: View {
         case .updateShipper(let id):
             var updated = invoice.shipper
             updated.id = id
-            LogisticsService.shared.updateShipper(updated) {
+            let trimmed = updated.persistedVariant()
+            LogisticsService.shared.updateShipper(trimmed) {
                 success in
                 DispatchQueue.main.async {
                     if success {
@@ -1084,7 +1109,7 @@ struct InvoiceFormView: View {
                 success in
                 DispatchQueue.main.async {
                     if success {
-                        receivers.append(invoice.receiver)
+                        viewModel.loadAllLogistics()
                     }
                     presentNextSaveItem()
                 }
@@ -1092,7 +1117,8 @@ struct InvoiceFormView: View {
         case .updateReceiver(let id):
             var updated = invoice.receiver
             updated.id = id
-            LogisticsService.shared.updateReceiver(updated) {
+            let trimmed = updated.persistedVariant()
+            LogisticsService.shared.updateReceiver(trimmed) {
                 success in
                 DispatchQueue.main.async {
                     if success {
@@ -1113,6 +1139,50 @@ struct InvoiceFormView: View {
         // no to save, skip saving current item and continue to next
         showSaveConfirm = false
         presentNextSaveItem()
+    }
+    
+    func validateInvoice(_ invoice: Invoice) -> Bool {
+        if invoice.rkNumber.trimmingCharacters(in: .whitespaces).isEmpty {
+            showAlert(title: "Missing RK Number", message: "Please enter the RK number.")
+            return false
+        }
+        
+        if invoice.broker.companyName.trimmingCharacters(in: .whitespaces).isEmpty {
+            showAlert(title: "Missing Broker", message: "Please select or enter a broker.")
+            return false
+        }
+        
+        if invoice.shipper.companyName.trimmingCharacters(in: .whitespaces).isEmpty {
+            showAlert(title: "Missing Shipper", message: "Please select or enter a shipper.")
+            return false
+        }
+        
+        if invoice.receiver.companyName.trimmingCharacters(in: .whitespaces).isEmpty {
+            showAlert(title: "Missing Receiver", message: "Please select or enter a receiver.")
+            return false
+        }
+        
+        if invoice.gross <= 0 {
+            showAlert(title: "Invalid Gross", message: "Gross must be greater than 0.")
+            return false
+        }
+        
+        if invoice.pickupDate == nil {
+            showAlert(title: "Missing Pickup Date", message: "Please select a pickup date.")
+            return false
+        }
+        
+        if invoice.deliveryDate == nil {
+            showAlert(title: "Missing Delivery Date", message: "Please select a delivery date.")
+            return false
+        }
+        
+        return true
+    }
+
+    func showAlert(title: String, message: String) {
+        validationErrorMessage = "\(title): \(message)"
+        showingValidationError = true
     }
 }
 

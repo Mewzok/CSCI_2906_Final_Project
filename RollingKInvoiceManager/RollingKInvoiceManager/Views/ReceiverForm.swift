@@ -12,9 +12,6 @@ struct ReceiverForm: View {
     
     init(receiver: Binding<Receiver>) {
         self._receiver = receiver
-        
-        // initialize state from binding's current value
-        let r = receiver.wrappedValue
     }
     
     var body: some View {

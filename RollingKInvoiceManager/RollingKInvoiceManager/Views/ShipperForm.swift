@@ -12,9 +12,6 @@ struct ShipperForm: View {
 
     init(shipper: Binding<Shipper>) {
         self._shipper = shipper
-        
-        // initialize state from binding's current value
-        let s = shipper.wrappedValue
     }
     
     var body: some View {

@@ -95,11 +95,12 @@ struct ManageLogisticsView: View {
         .sheet(isPresented: $showEditSheet) {
             if let b = editingBroker {
                 BrokerEditView(broker: b) { updated in
-                    LogisticsService.shared.updateBroker(updated) { success in
+                    let trimmed = updated.persistedVariant()
+                    LogisticsService.shared.updateBroker(trimmed) { success in
                         DispatchQueue.main.async {
                             if success {
-                                if let idx = brokers.firstIndex(where: { $0.id == updated.id }) {
-                                    brokers[idx] = updated
+                                if let idx = brokers.firstIndex(where: { $0.id == trimmed.id }) {
+                                    brokers[idx] = trimmed
                                 } else {
                                     viewModel.loadAllLogistics()
                                 }
@@ -111,11 +112,12 @@ struct ManageLogisticsView: View {
                 }
             } else if let s = editingShipper {
                 ShipperEditView(shipper: s) { updated in
-                    LogisticsService.shared.updateShipper(updated) { success in
+                    let trimmed = updated.persistedVariant()
+                    LogisticsService.shared.updateShipper(trimmed) { success in
                         DispatchQueue.main.async {
                             if success {
-                                if let idx = shippers.firstIndex(where: { $0.id == updated.id }) {
-                                    shippers[idx] = updated
+                                if let idx = shippers.firstIndex(where: { $0.id == trimmed.id }) {
+                                    shippers[idx] = trimmed
                                 } else {
                                     viewModel.loadAllLogistics()
                                 }
@@ -127,11 +129,12 @@ struct ManageLogisticsView: View {
                 }
             } else if let r = editingReceiver {
                 ReceiverEditView(receiver: r) { updated in
-                    LogisticsService.shared.updateReceiver(updated) { success in
+                    let trimmed = updated.persistedVariant()
+                    LogisticsService.shared.updateReceiver(trimmed) { success in
                         DispatchQueue.main.async {
                             if success {
-                                if let idx = receivers.firstIndex(where: { $0.id == updated.id }) {
-                                    receivers[idx] = updated
+                                if let idx = receivers.firstIndex(where: { $0.id == trimmed.id }) {
+                                    receivers[idx] = trimmed
                                 } else {
                                     viewModel.loadAllLogistics()
                                 }

@@ -9,6 +9,10 @@ import Foundation
 
 // helpers to extract the saved portion and compare them
 extension Broker {
+    var isValid: Bool {
+        !companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
     // create variant with only persisted fields
     func persistedVariant() -> Broker {
         return Broker(id: self.id,
@@ -34,6 +38,10 @@ extension Broker {
 }
 
 extension Shipper {
+    var isValid: Bool {
+        !companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
     func persistedVariant() -> Shipper {
         return Shipper(id: self.id,
                        companyName: self.companyName,
@@ -57,6 +65,10 @@ extension Shipper {
 }
 
 extension Receiver {
+    var isValid: Bool {
+        !companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
     func persistedVariant() -> Receiver {
         return Receiver(id: self.id,
                         companyName: self.companyName,

@@ -12,9 +12,6 @@ struct BrokerForm: View {
     
     init(broker: Binding<Broker>) {
         self._broker = broker
-        
-        // initialize state from binding's current value
-        let b = broker.wrappedValue
     }
     
     var body: some View {
@@ -59,6 +56,17 @@ struct BrokerForm: View {
                 ))
                     .multilineTextAlignment(.trailing)
                     .frame(maxWidth: 180)
+            }
+            // broker name
+            HStack {
+                Text("Broker Name")
+                Spacer()
+                TextField("Name", text: Binding(
+                    get: { broker.brokerName ?? "" },
+                    set: { broker.brokerName = $0.isEmpty ? nil : $0 }
+                ))
+                .multilineTextAlignment(.trailing)
+                .frame(maxWidth: 180)
             }
         }
         .padding(.vertical, 6)
