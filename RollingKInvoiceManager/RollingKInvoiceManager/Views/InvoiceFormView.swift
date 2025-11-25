@@ -34,6 +34,13 @@ struct InvoiceFormView: View {
     @State private var selectedShipperID: String? = nil
     @State private var selectedReceiverID: String? = nil
     
+    // alerts
+    private enum SaveItem { case broker, shipper, receiver }
+    @State private var saveQueue: [SaveItem] = []
+    @State private var currentSaveItem: SaveItem? = nil
+    @State private var showSaveConfirm: Bool = false
+    @State private var saveInProgress: Bool = false
+    
     // invoice section
     private var invoiceSection: some View {
         DisclosureGroup(isExpanded: $showInvoiceInfo) {
@@ -464,10 +471,7 @@ struct InvoiceFormView: View {
                 sectionLabel("Dates")
             }
             .padding(.horizontal)
-            
-            Spacer(minLength: 32)
         }
-        .padding(.top, 12)
     }
     
     // compute totals
@@ -597,17 +601,42 @@ struct InvoiceFormView: View {
                             }
                             
                             Button {
-                                // store computed net back on main model before saving
-                                var saved = invoice
-                                saved.net = computedNet
-                                saved.dispatchCost = computedDispatchCost
-                                onSave(saved)
-                                dismiss()
+                                beginSaveProcess()
                             } label: {
                                 Text("Save")
                                     .frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.borderedProminent)
+                            .alert(isPresented: $showSaveConfirm) {
+                                // create title and message from currentSaveItem
+                                let title: String
+                                let message: String
+                                switch currentSaveItem {
+                                case .broker:
+                                    title = "Save new Broker?"
+                                    message = "Would you like to save broker '\(invoice.broker.companyName)'?"
+                                case .shipper:
+                                    title = "Save new Shipper?"
+                                    message = "Would you like to save shipper '\(invoice.shipper.companyName)'?"
+                                case .receiver:
+                                    title = "Save new Receiver?"
+                                    message = "Would you like to save receiver '\(invoice.receiver.companyName)'?"
+                                case .none:
+                                    title = ""
+                                    message = ""
+                                }
+                                
+                                return Alert(
+                                    title: Text(title),
+                                    message: Text(message),
+                                    primaryButton: .default(Text("Yes")) {
+                                        handleConfirmSaveCurrentItem()
+                                    },
+                                    secondaryButton: .cancel {
+                                        handleSkipSaveCurrentItem()
+                                    }
+                                )
+                            }
                         }
                         .padding(.horizontal)
                     }
@@ -811,6 +840,107 @@ struct InvoiceFormView: View {
             .multilineTextAlignment(.trailing)
             .onAppear { text = value != nil ? String(value!) : "" }
         }
+    }
+    
+    private func save() {
+        // store computed net back on main model before saving
+        var saved = invoice
+        saved.net = computedNet
+        saved.dispatchCost = computedDispatchCost
+        onSave(saved)
+        dismiss()
+    }
+    
+    private func beginSaveProcess() {
+        guard !saveInProgress
+        else {
+            return
+        }
+        saveQueue = []
+        
+        // build queue for new items in order: broker, shipper, receiver
+        let isNewBroker = !brokers.contains { $0.companyName.lowercased() == invoice.broker.companyName.lowercased() && !$0.companyName.isEmpty }
+        let isNewShipper = !shippers.contains { $0.companyName.lowercased() == invoice.shipper.companyName.lowercased() && !$0.companyName.isEmpty }
+        let isNewReceiver = !receivers.contains { $0.companyName.lowercased() == invoice.receiver.companyName.lowercased() && !$0.companyName.isEmpty }
+        
+        if isNewBroker {
+            saveQueue.append(.broker)
+        }
+        
+        if isNewShipper {
+            saveQueue.append(.shipper)
+        }
+        
+        if isNewReceiver {
+            saveQueue.append(.receiver)
+        }
+        
+        if saveQueue.isEmpty {
+            // nothing is new, just save the invoice
+            save()
+        } else {
+            saveInProgress = true
+            presentNextSaveItem()
+        }
+    }
+    
+    private func presentNextSaveItem() {
+        if saveQueue.isEmpty {
+            // current save is done
+            saveInProgress = false
+            save()
+            return
+        }
+        currentSaveItem = saveQueue.removeFirst()
+        showSaveConfirm = true
+    }
+    
+    private func handleConfirmSaveCurrentItem() {
+        guard let item = currentSaveItem
+        else {
+            presentNextSaveItem()
+            return
+        }
+        showSaveConfirm = false
+        
+        switch item {
+        case .broker:
+            LogisticsService.shared.addBroker(invoice.broker) {
+                success in
+                DispatchQueue.main.async {
+                    if success {
+                        brokers.append(invoice.broker)
+                    }
+                    presentNextSaveItem()
+                }
+            }
+        case .shipper:
+            LogisticsService.shared.addShipper(invoice.shipper) {
+                success in
+                DispatchQueue.main.async {
+                    if success {
+                        shippers.append(invoice.shipper)
+                    }
+                    presentNextSaveItem()
+                }
+            }
+        case .receiver:
+            LogisticsService.shared.addReceiver(invoice.receiver) {
+                success in
+                DispatchQueue.main.async {
+                    if success {
+                        receivers.append(invoice.receiver)
+                    }
+                    presentNextSaveItem()
+                }
+            }
+        }
+    }
+    
+    private func handleSkipSaveCurrentItem() {
+        // no to save, skip saving current item and continue to next
+        showSaveConfirm = false
+        presentNextSaveItem()
     }
 }
 
